@@ -91,5 +91,5 @@ app.put('/users/:id', async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Server berjalan pada port ${PORT}`);
+  console.log(`Server sedang berjalan di http://localhost:${PORT}`);
 });
