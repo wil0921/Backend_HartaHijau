@@ -2,6 +2,10 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const jwt = require('jsonwebtoken');
 const twilio = require('twilio');
+//dotenv itu package buat nyimpen data yang ga boleh di publish, kayak configurasi twilio
+require('dotenv')
+//cara pakenya dengan menginstall donenv dan membuat file .env
+// oh iya konfigurasi twilionya udah di pindah ke file .env
 
 const app = express();
 
@@ -19,9 +23,9 @@ app.post('/register', (req, res) => {
 
   const otp = Math.floor(100000 + Math.random() * 900000);
 
-  twilioClient.messages.create({
+  process.env.TWILIO_CLIENT.messages.create({
     body: `Kode OTP Anda: ${otp}`,
-    from: TWILIO_PHONE_NUMBER,
+    from: process.env.TWILIO_PHONE_NUMBER,
     to: phoneNumber
   }).then(() => {
 
