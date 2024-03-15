@@ -1,7 +1,7 @@
 // Dummy data user
 const users = [
-  { id: 1, phoneNumber: "08123456789", password: "password1" },
-  { id: 2, phoneNumber: "08987654321", password: "password2" },
+  { user_id: 1, phoneNumber: "08123456789", password: "password1", verified: true },
+  { user_id: 2, phoneNumber: "08987654321", password: "password2", verified: true },
 ];
 
 const usersModel = { users };

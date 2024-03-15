@@ -1,10 +1,6 @@
-//file ini berfungsi untuk menangani request dari routes dan memberi respon
-
-// Import library
 const twilio = require("twilio");
-// Import model
-const usersModel = require("../models/users.model");
 const jwt = require("jsonwebtoken");
+const usersModel = require("../models/users.model");
 require("dotenv").config();
 /* dotenv itu package buat nyimpen data yang ga boleh di publish, kayak configurasi twilio
 cara pakenya dengan menginstall donenv dan membuat file .env
@@ -33,7 +29,8 @@ const register = (req, res) => {
       to: phoneNumber,
     })
     .then(() => {
-      users.push({ phoneNumber, username, password, otp });
+      // saving data user
+      usersModel.users.push({ phoneNumber, username, password, otp });
       res.status(200).json({ message: "Kode OTP telah dikirimkan ke nomor telepon Anda" });
     })
     .catch((err) => {

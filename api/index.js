@@ -1,11 +1,15 @@
 const express = require("express");
 const bodyParser = require("body-parser");
-const routes = require("./src/routes");
+const routes = require("../src/routes/");
+const init = require('../src/config/connect')
 
 const app = express();
 
 // middleware
 app.use(bodyParser.json());
+
+// menjalankan database
+init()
 
 app.get("/", (req, res) => {
   res.status(200).send("Selamat datang di server Node.js!");
