@@ -19,4 +19,4 @@ const authenticateToken = (req, res, next) => {
 
 //menggabungkan semua auth middleware kedalam 1 variabel agar mudah dikelola
 const authMiddleware = { authenticateToken };
-export default authMiddleware;
+module.exports = authMiddleware;

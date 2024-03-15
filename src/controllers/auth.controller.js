@@ -3,9 +3,9 @@
 // Import library
 const twilio = require("twilio");
 // Import model
-import usersModel from "../models/users.model";
-
-require("dotenv");
+const usersModel = require("../models/users.model");
+const jwt = require("jsonwebtoken");
+require("dotenv").config();
 /* dotenv itu package buat nyimpen data yang ga boleh di publish, kayak configurasi twilio
 cara pakenya dengan menginstall donenv dan membuat file .env
 oh iya konfigurasi twilionya udah di pindah ke file .env */
@@ -13,6 +13,7 @@ oh iya konfigurasi twilionya udah di pindah ke file .env */
 // Register controller
 const register = (req, res) => {
   const { phoneNumber, username, password } = req.body;
+  console.log(req.body)
 
   // authentication
   if (usersModel.users.some((u) => u.phoneNumber === phoneNumber)) {
@@ -21,9 +22,11 @@ const register = (req, res) => {
 
   // create otp
   const otp = Math.floor(100000 + Math.random() * 900000);
+  // twilio config
+  const TWILIO_CLIENT = twilio(process.env.ACCOUNT_ID, process.env.AUTH_TOKEN);
 
   // send otp using twilio
-  process.env.TWILIO_CLIENT.messages
+  TWILIO_CLIENT.messages
     .create({
       body: `Kode OTP Anda: ${otp}`,
       from: process.env.TWILIO_PHONE_NUMBER,
@@ -31,7 +34,7 @@ const register = (req, res) => {
     })
     .then(() => {
       users.push({ phoneNumber, username, password, otp });
-      res.json({ message: "Kode OTP telah dikirimkan ke nomor telepon Anda" });
+      res.status(200).json({ message: "Kode OTP telah dikirimkan ke nomor telepon Anda" });
     })
     .catch((err) => {
       console.error("Error sending OTP:", err);
@@ -88,4 +91,4 @@ const secureAuth = (req, res) => {
 
 //menggabungkan semua auth controller kedalam 1 variabel agar mudah dikelola
 const authController = { register, verifyAuth, login, secureAuth };
-export default authController;
+module.exports = authController;

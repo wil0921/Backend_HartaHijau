@@ -1,16 +1,17 @@
-// Import controller
-import authController from "../controllers/auth.controller";
-// Import middleware
-import authMiddleware from "../middleware/auth.middleware";
+const router = require('express').Router();
+const authController = require('../controllers/auth.controller');
+const authMiddleware = require('../middleware/auth.middleware');
 
 // Route register
-app.post("/register", authController.register);
+router.post('/register', authController.register);
 
 // Route verify user
-app.post("/verify", authController.verifyAuth);
+router.post('/verify', authController.verifyAuth);
 
 // Route login
-app.post("/login", authController.login);
+router.post('/login', authController.login);
 
 // Route secure user
-app.get("/secure", authMiddleware.authenticateToken, authController.secureAuth);
+router.get('/secure', authMiddleware.authenticateToken, authController.secureAuth);
+
+module.exports = router;

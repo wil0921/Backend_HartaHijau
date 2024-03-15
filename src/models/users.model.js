@@ -5,4 +5,4 @@ const users = [
 ];
 
 const usersModel = { users };
-export default usersModel;
+module.exports = usersModel;
