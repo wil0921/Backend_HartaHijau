@@ -1,8 +1,13 @@
-// Dummy data user
-const users = [
-  { user_id: 1, phoneNumber: "08123456789", password: "password1", verified: true },
-  { user_id: 2, phoneNumber: "08987654321", password: "password2", verified: true },
-];
+const mongoose = require("mongoose");
+const Schema = mongoose.Schema;
 
-const usersModel = { users };
-module.exports = usersModel;
+const UserSchema = new Schema({
+  name: String,
+  phoneNumber: Number,
+  password: String,
+  verified: Boolean,
+});
+
+const User = mongoose.model("User", UserSchema);
+
+module.exports = User;

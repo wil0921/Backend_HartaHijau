@@ -9,7 +9,7 @@ oh iya konfigurasi twilionya udah di pindah ke file .env */
 // Register controller
 const register = (req, res) => {
   const { phoneNumber, username, password } = req.body;
-  console.log(req.body)
+  console.log(req.body);
 
   // authentication
   if (usersModel.users.some((u) => u.phoneNumber === phoneNumber)) {
@@ -31,7 +31,9 @@ const register = (req, res) => {
     .then(() => {
       // saving data user
       usersModel.users.push({ phoneNumber, username, password, otp });
-      res.status(200).json({ message: "Kode OTP telah dikirimkan ke nomor telepon Anda" });
+      res
+        .status(200)
+        .json({ message: "Kode OTP telah dikirimkan ke nomor telepon Anda" });
     })
     .catch((err) => {
       console.error("Error sending OTP:", err);
@@ -39,6 +41,33 @@ const register = (req, res) => {
         .status(500)
         .json({ message: "Terjadi kesalahan saat mengirimkan OTP" });
     });
+};
+
+const sendOTPVerification = async (req, res) => {
+  try {
+    // create otp
+    const otp = Math.floor(100000 + Math.random() * 900000);
+    // twilio config
+    const TWILIO_CLIENT = twilio(
+      process.env.ACCOUNT_ID,
+      process.env.AUTH_TOKEN
+    );
+
+    // send otp using twilio
+    await TWILIO_CLIENT.messages.create({
+      body: `Kode OTP Anda: ${otp}`,
+      from: process.env.TWILIO_PHONE_NUMBER,
+      to: phoneNumber,
+    });
+    // saving data user
+    usersModel.users.push({ phoneNumber, username, password, otp });
+    res
+      .status(200)
+      .json({ message: "Kode OTP telah dikirimkan ke nomor telepon Anda" });
+  } catch (err) {
+    console.error("Error sending OTP:", err);
+    res.status(500).json({ message: "Terjadi kesalahan saat mengirimkan OTP" });
+  }
 };
 
 // Verify User controller
