@@ -1,66 +1,78 @@
 const twilio = require("twilio");
 const jwt = require("jsonwebtoken");
-const usersModel = require("../models/users.model");
+const bcrypt = require("bcrypt");
+const User = require("../models/users.model");
+const OTPVerification = require("../models/OTPVerification.model");
 require("dotenv").config();
 /* dotenv itu package buat nyimpen data yang ga boleh di publish, kayak configurasi twilio
 cara pakenya dengan menginstall donenv dan membuat file .env
 oh iya konfigurasi twilionya udah di pindah ke file .env */
 
 // Register controller
-const register = (req, res) => {
+const register = async (req, res) => {
   const { phoneNumber, username, password } = req.body;
-  console.log(req.body);
+  const user = await User.find({ phoneNumber });
 
   // authentication
-  if (usersModel.users.some((u) => u.phoneNumber === phoneNumber)) {
+  if (user.length) {
     return res.status(400).json({ message: "Nomor telepon sudah terdaftar" });
   }
 
+  //hashing password
+  const saltRounds = 10;
+  const hashedPassword = bcrypt.hash(password, saltRounds);
+
+  // input user into db
+  const newUser = new User({
+    phoneNumber,
+    username,
+    password: hashedPassword,
+    verified: false,
+  });
+
+  // saving user into db (will return the new user)
+  try {
+    await newUser.save();
+    // sending otp into new user
+    sendOTPVerification(newUserData, res);
+  } catch (err) {
+    console.error("Error saving data:", err);
+    res.status(400).json({ message: err.message });
+  }
+};
+
+const sendOTPVerification = async ({ _id, phoneNumber }, res) => {
   // create otp
   const otp = Math.floor(100000 + Math.random() * 900000);
   // twilio config
-  const TWILIO_CLIENT = twilio(process.env.ACCOUNT_ID, process.env.AUTH_TOKEN);
+  const TWILIO_PHONE_NUMBER = process.env.TWILIO_PHONE_NUMBER;
+  const ACCOUNT_ID = process.env.ACCOUNT_ID;
+  const AUTH_TOKEN = process.env.AUTH_TOKEN;
+  const TWILIO_CLIENT = twilio(ACCOUNT_ID, AUTH_TOKEN);
 
-  // send otp using twilio
-  TWILIO_CLIENT.messages
-    .create({
-      body: `Kode OTP Anda: ${otp}`,
-      from: process.env.TWILIO_PHONE_NUMBER,
-      to: phoneNumber,
-    })
-    .then(() => {
-      // saving data user
-      usersModel.users.push({ phoneNumber, username, password, otp });
-      res
-        .status(200)
-        .json({ message: "Kode OTP telah dikirimkan ke nomor telepon Anda" });
-    })
-    .catch((err) => {
-      console.error("Error sending OTP:", err);
-      res
-        .status(500)
-        .json({ message: "Terjadi kesalahan saat mengirimkan OTP" });
-    });
-};
-
-const sendOTPVerification = async (req, res) => {
   try {
-    // create otp
-    const otp = Math.floor(100000 + Math.random() * 900000);
-    // twilio config
-    const TWILIO_CLIENT = twilio(
-      process.env.ACCOUNT_ID,
-      process.env.AUTH_TOKEN
-    );
-
     // send otp using twilio
     await TWILIO_CLIENT.messages.create({
       body: `Kode OTP Anda: ${otp}`,
-      from: process.env.TWILIO_PHONE_NUMBER,
+      from: TWILIO_PHONE_NUMBER,
       to: phoneNumber,
     });
-    // saving data user
-    usersModel.users.push({ phoneNumber, username, password, otp });
+
+    //hashing otp
+    const saltRounds = 10;
+    const hashedOTP = bcrypt.hash(otp, saltRounds);
+
+    // input otp into db
+    const newOTPVerification = new OTPVerification({
+      userId: _id,
+      otp: hashedOTP,
+      createdAt: Date.now(),
+      expiresAt: Date.now() + 3600000, // expires in 1 hour
+    });
+
+    // saving otp into db
+    await newOTPVerification.save();
+
     res
       .status(200)
       .json({ message: "Kode OTP telah dikirimkan ke nomor telepon Anda" });
