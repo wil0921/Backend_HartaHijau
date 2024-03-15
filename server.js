@@ -1,13 +1,10 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const { MongoClient, ObjectId } = require("mongodb");
-const routes = require("./routes");
+const routes = require("./src/routes");
 
 const app = express();
 const PORT = 3000;
-const MONGODB_URI = "mongodb://localhost:27017/bookstore";
-const DATABASE_NAME = "backendHartaHijau";
-const COLLECTION_NAME = "harta hijau";
 
 app.use(bodyParser.json());
 app.use(routes);
@@ -18,12 +15,15 @@ app.get("/", (req, res) => {
 
 app.get("/users", async (req, res) => {
   try {
-    const client = await MongoClient.connect(MONGODB_URI, {
+    const client = await MongoClient.connect(process.env.MONGODB_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
-    const db = client.db(DATABASE_NAME);
-    const users = await db.collection(COLLECTION_NAME).find().toArray();
+    const db = client.db(process.env.DATABASE_NAME);
+    const users = await db
+      .collection(process.env.COLLECTION_NAME)
+      .find()
+      .toArray();
     res.json(users);
     client.close();
   } catch (error) {
@@ -37,13 +37,13 @@ app.get("/users", async (req, res) => {
 app.post("/users", async (req, res) => {
   try {
     const { username, email } = req.body;
-    const client = await MongoClient.connect(MONGODB_URI, {
+    const client = await MongoClient.connect(process.env.MONGODB_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
-    const db = client.db(DATABASE_NAME);
+    const db = client.db(process.env.DATABASE_NAME);
     const result = await db
-      .collection(COLLECTION_NAME)
+      .collection(process.env.COLLECTION_NAME)
       .insertOne({ username, email });
     res
       .status(201)
@@ -60,13 +60,13 @@ app.post("/users", async (req, res) => {
 app.get("/users/:id", async (req, res) => {
   try {
     const userId = req.params.id;
-    const client = await MongoClient.connect(MONGODB_URI, {
+    const client = await MongoClient.connect(process.env.MONGODB_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
-    const db = client.db(DATABASE_NAME);
+    const db = client.db(process.env.DATABASE_NAME);
     const user = await db
-      .collection(COLLECTION_NAME)
+      .collection(process.env.COLLECTION_NAME)
       .findOne({ _id: ObjectId(userId) });
     res.status(200).json(user);
     client.close();
@@ -81,13 +81,13 @@ app.get("/users/:id", async (req, res) => {
 app.delete("/users/:id", async (req, res) => {
   try {
     const userId = req.params.id;
-    const client = await MongoClient.connect(MONGODB_URI, {
+    const client = await MongoClient.connect(process.env.MONGODB_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
-    const db = client.db(DATABASE_NAME);
+    const db = client.db(process.env.DATABASE_NAME);
     const result = await db
-      .collection(COLLECTION_NAME)
+      .collection(process.env.COLLECTION_NAME)
       .deleteOne({ _id: ObjectId(userId) });
     if (result.deletedCount === 0) {
       return res.status(404).json({ message: "Data pengguna tidak ditemukan" });
@@ -108,13 +108,13 @@ app.put("/users/:id", async (req, res) => {
   try {
     const userId = req.params.id;
     const { username, email } = req.body;
-    const client = await MongoClient.connect(MONGODB_URI, {
+    const client = await MongoClient.connect(process.env.MONGODB_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
-    const db = client.db(DATABASE_NAME);
+    const db = client.db(process.env.DATABASE_NAME);
     const result = await db
-      .collection(COLLECTION_NAME)
+      .collection(process.env.COLLECTION_NAME)
       .updateOne({ _id: ObjectId(userId) }, { $set: { username, email } });
     if (result.matchedCount === 0) {
       return res.status(404).json({ message: "Data pengguna tidak ditemukan" });
