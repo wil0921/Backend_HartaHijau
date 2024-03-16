@@ -6,7 +6,7 @@ const authMiddleware = require('../middleware/auth.middleware');
 router.post('/register', authController.register);
 
 // Route verify user
-router.post('/verify', authController.verifyAuth);
+router.post('/verify', authController.verifyOTP);
 
 // Route login
 router.post('/login', authController.login);

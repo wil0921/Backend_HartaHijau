@@ -83,22 +83,59 @@ const sendOTPVerification = async ({ _id, phoneNumber }, res) => {
 };
 
 // Verify User controller
-const verifyAuth = (req, res) => {
-  const { phoneNumber, otp } = req.body;
-  // search user by phone number
-  const user = usersModel.users.find((u) => u.phoneNumber === phoneNumber);
+const verifyOTP = async (req, res) => {
+  const { userId, otp } = req.body;
+  const user = await User.find({ phoneNumber });
 
   // authentication
-  if (!user || user.otp !== otp) {
-    return res.status(401).json({ message: "Kode OTP tidak valid" });
+  if (!userId || !otp) {
+    return res.status(401).json({ message: "Kode OTP tidak boleh kosong" });
   }
+
+  const OTPVerificationRecord = OTPVerification.find({ userId });
+
+  // if verification data record doesn't exist
+  if (OTPVerificationRecord.length <= 0) {
+    res.status(404).json({
+      message: "nomor tersebut sudah terverifikasi. silahkan login atau signup",
+    });
+  }
+
+  const { expiresAt } = OTPVerificationRecord[0];
+  const hashedOTP = OTPVerificationRecord[0].otp;
+
+  // if otp already expired
+  if (Date.now() > expiresAt) {
+    // delete verification otp if already expired
+    await OTPVerification.deleteMany({ userId });
+    res.status(401).json({
+      message:
+        "Maaf, kode otp tersebut telah kadaluarsa. Silahkan kirim permintaan OTP lagi.",
+    });
+  }
+
+  const validOTP = bcrypt.compare(otp, hashedOTP);
+  // if otp doesn't valid
+  if (!validOTP) {
+    res.status(401).json({
+      message: "Maaf, kode otp yang anda masukkan. Silahkan periksa lagi.",
+    });
+  }
+
+  // if verification success
+  await User.updateOne({ _id: userId }, { verified: true });
+  // delete verification otp if already expired
+  await OTPVerification.deleteMany({ userId });
 
   //generate jwt token
   const token = jwt.sign({ userId: user.id }, "secret_key", {
     expiresIn: "1h",
   });
 
-  res.json({ token });
+  res.status(200).json({
+    message: "nomor berhasil terverifikasi",
+    token,
+  });
 };
 
 // Login controller
@@ -128,5 +165,5 @@ const secureAuth = (req, res) => {
 };
 
 //menggabungkan semua auth controller kedalam 1 variabel agar mudah dikelola
-const authController = { register, verifyAuth, login, secureAuth };
+const authController = { register, verifyOTP, login, secureAuth };
 module.exports = authController;
