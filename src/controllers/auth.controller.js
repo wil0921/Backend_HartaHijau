@@ -1,8 +1,6 @@
 const twilio = require("twilio");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
-const User = require("../models/users.model");
-const OTPVerification = require("../models/OTPVerification.model");
 
 // Register controller
 const register = async (req, res) => {
@@ -38,7 +36,7 @@ const register = async (req, res) => {
     sendOTPVerification(result, res);
   } catch (err) {
     console.error("Error saving user:", err);
-    res.status(400).json({
+    return res.status(400).json({
       status: false,
       message: "Terjadi kesalahan saat menambah user",
       error: error.message,
@@ -80,13 +78,13 @@ const sendOTPVerification = async ({ _id, phoneNumber }, res) => {
     // saving otp into db
     await collection.insertOne(newOTPVerification);
 
-    res.status(200).json({
+    return res.status(200).json({
       status: false,
       message: "Kode OTP telah dikirimkan ke nomor telepon Anda",
     });
   } catch (err) {
     console.error("Error sending OTP:", err);
-    res.status(500).json({
+    return res.status(500).json({
       status: false,
       message: "Terjadi kesalahan saat mengirimkan OTP",
       error: error.message,
@@ -114,7 +112,7 @@ const verifyOTP = async (req, res) => {
 
   // if verification data record doesn't exist
   if (OTPVerificationRecord.length <= 0) {
-    res.status(404).json({
+    return res.status(404).json({
       message: "nomor tersebut sudah terverifikasi. silahkan login atau signup",
     });
   }
@@ -126,7 +124,7 @@ const verifyOTP = async (req, res) => {
   if (Date.now() > expiresAt) {
     // delete verification otp if already expired
     await db.collection("OTP_verification").deleteMany({ userId });
-    res.status(401).json({
+    return res.status(401).json({
       status: false,
       message:
         "Maaf, kode otp tersebut telah kadaluarsa. Silahkan kirim permintaan OTP lagi.",
@@ -136,7 +134,7 @@ const verifyOTP = async (req, res) => {
   const validOTP = bcrypt.compare(otp, hashedOTP);
   // if otp doesn't valid
   if (!validOTP) {
-    res.status(401).json({
+    return res.status(401).json({
       status: false,
       message: "Maaf, kode otp yang anda masukkan. Silahkan periksa lagi.",
     });
@@ -152,7 +150,7 @@ const verifyOTP = async (req, res) => {
     expiresIn: "1h",
   });
 
-  res.status(200).json({
+  return res.status(200).json({
     status: true,
     message: "nomor berhasil terverifikasi",
     token,
@@ -160,16 +158,18 @@ const verifyOTP = async (req, res) => {
 };
 
 // Login controller
-const login = (req, res) => {
+const login = async (req, res) => {
   const { phoneNumber, password } = req.body;
+  const db = await connectToDatabase();
+  const collection = db.collection("Users");
   // search user by phone number
-  const user = usersModel.users.find((u) => u.phoneNumber === phoneNumber);
+  const user = collection.find((u) => u.phoneNumber === phoneNumber);
 
   // authentication
   if (!user || user.password !== password) {
     return res
       .status(401)
-      .json({ message: "Nomor telepon atau password salah" });
+      .json({ status: false, message: "Nomor telepon atau password salah" });
   }
 
   //generate jwt token
@@ -177,7 +177,8 @@ const login = (req, res) => {
     expiresIn: "1h",
   });
 
-  res.json({ token });
+  //login success
+  res.status(200).json({ status: true, message: "Berhasil login", token });
 };
 
 // Secure User controller
