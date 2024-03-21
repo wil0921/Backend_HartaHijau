@@ -3,19 +3,20 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const User = require("../models/users.model");
 const OTPVerification = require("../models/OTPVerification.model");
-require("dotenv").config();
-/* dotenv itu package buat nyimpen data yang ga boleh di publish, kayak configurasi twilio
-cara pakenya dengan menginstall donenv dan membuat file .env
-oh iya konfigurasi twilionya udah di pindah ke file .env */
 
 // Register controller
 const register = async (req, res) => {
   const { phoneNumber, username, password } = req.body;
-  const user = await User.find({ phoneNumber });
+  const db = await connectToDatabase();
+  const collection = db.collection("Users");
+  const user = db.collection.find({ phoneNumber });
 
   // authentication
   if (user.length) {
-    return res.status(400).json({ message: "Nomor telepon sudah terdaftar" });
+    return res.status(400).json({
+      status: false,
+      message: "Nomor telepon sudah terdaftar",
+    });
   }
 
   //hashing password
@@ -23,25 +24,31 @@ const register = async (req, res) => {
   const hashedPassword = bcrypt.hash(password, saltRounds);
 
   // input user into db
-  const newUser = new User({
+  const newUser = {
     phoneNumber,
     username,
     password: hashedPassword,
     verified: false,
-  });
+  };
 
   // saving user into db (will return the new user)
   try {
-    await newUser.save();
+    const result = await collection.insertOne(newUser);
     // sending otp into new user
-    sendOTPVerification(newUserData, res);
+    sendOTPVerification(result, res);
   } catch (err) {
-    console.error("Error saving data:", err);
-    res.status(400).json({ message: err.message });
+    console.error("Error saving user:", err);
+    res.status(400).json({
+      status: false,
+      message: "Terjadi kesalahan saat menambah user",
+      error: error.message,
+    });
   }
 };
 
 const sendOTPVerification = async ({ _id, phoneNumber }, res) => {
+  const db = await connectToDatabase();
+  const collection = db.collection("OTP_Verification");
   // create otp
   const otp = Math.floor(100000 + Math.random() * 900000);
   // twilio config
@@ -63,36 +70,47 @@ const sendOTPVerification = async ({ _id, phoneNumber }, res) => {
     const hashedOTP = bcrypt.hash(otp, saltRounds);
 
     // input otp into db
-    const newOTPVerification = new OTPVerification({
+    const newOTPVerification = {
       userId: _id,
       otp: hashedOTP,
       createdAt: Date.now(),
       expiresAt: Date.now() + 3600000, // expires in 1 hour
-    });
+    };
 
     // saving otp into db
-    await newOTPVerification.save();
+    await collection.insertOne(newOTPVerification);
 
-    res
-      .status(200)
-      .json({ message: "Kode OTP telah dikirimkan ke nomor telepon Anda" });
+    res.status(200).json({
+      status: false,
+      message: "Kode OTP telah dikirimkan ke nomor telepon Anda",
+    });
   } catch (err) {
     console.error("Error sending OTP:", err);
-    res.status(500).json({ message: "Terjadi kesalahan saat mengirimkan OTP" });
+    res.status(500).json({
+      status: false,
+      message: "Terjadi kesalahan saat mengirimkan OTP",
+      error: error.message,
+    });
   }
 };
 
 // Verify User controller
 const verifyOTP = async (req, res) => {
   const { userId, otp } = req.body;
-  const user = await User.find({ phoneNumber });
+  const db = await connectToDatabase();
+  const user = db.collection("Users").find({ phoneNumber });
 
   // authentication
   if (!userId || !otp) {
-    return res.status(401).json({ message: "Kode OTP tidak boleh kosong" });
+    return res.status(401).json({
+      status: false,
+      message: "Kode OTP tidak boleh kosong",
+    });
   }
 
-  const OTPVerificationRecord = OTPVerification.find({ userId });
+  const OTPVerificationRecord = db
+    .collection("OTP_verification")
+    .find({ userId });
 
   // if verification data record doesn't exist
   if (OTPVerificationRecord.length <= 0) {
@@ -107,8 +125,9 @@ const verifyOTP = async (req, res) => {
   // if otp already expired
   if (Date.now() > expiresAt) {
     // delete verification otp if already expired
-    await OTPVerification.deleteMany({ userId });
+    await db.collection("OTP_verification").deleteMany({ userId });
     res.status(401).json({
+      status: false,
       message:
         "Maaf, kode otp tersebut telah kadaluarsa. Silahkan kirim permintaan OTP lagi.",
     });
@@ -118,14 +137,15 @@ const verifyOTP = async (req, res) => {
   // if otp doesn't valid
   if (!validOTP) {
     res.status(401).json({
+      status: false,
       message: "Maaf, kode otp yang anda masukkan. Silahkan periksa lagi.",
     });
   }
 
   // if verification success
-  await User.updateOne({ _id: userId }, { verified: true });
+  await db.collection("User").updateOne({ _id: userId }, { verified: true });
   // delete verification otp if already expired
-  await OTPVerification.deleteMany({ userId });
+  await db.collection("OTP_verification").deleteMany({ userId });
 
   //generate jwt token
   const token = jwt.sign({ userId: user.id }, "secret_key", {
@@ -133,6 +153,7 @@ const verifyOTP = async (req, res) => {
   });
 
   res.status(200).json({
+    status: true,
     message: "nomor berhasil terverifikasi",
     token,
   });
