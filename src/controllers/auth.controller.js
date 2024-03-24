@@ -2,12 +2,14 @@ const twilio = require("twilio");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 
+const connectToDatabase = require("../config/database");
+
 // Register controller
 const register = async (req, res) => {
   const { phoneNumber, username, password } = req.body;
   const db = await connectToDatabase();
   const collection = db.collection("Users");
-  const user = db.collection.find({ phoneNumber });
+  const user = await collection.find({ phoneNumber });
 
   // authentication
   if (user.length) {
@@ -87,7 +89,7 @@ const sendOTPVerification = async ({ _id, phoneNumber }, res) => {
     return res.status(500).json({
       status: false,
       message: "Terjadi kesalahan saat mengirimkan OTP",
-      error: error.message,
+      error: err.message,
     });
   }
 };
@@ -163,7 +165,7 @@ const login = async (req, res) => {
   const db = await connectToDatabase();
   const collection = db.collection("Users");
   // search user by phone number
-  const user = collection.find((u) => u.phoneNumber === phoneNumber);
+  const user = await collection.find((u) => u.phoneNumber === phoneNumber);
 
   // authentication
   if (!user || user.password !== password) {
