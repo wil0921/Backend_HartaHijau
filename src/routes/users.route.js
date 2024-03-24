@@ -1,13 +1,17 @@
 const router = require("express").Router();
-const { addUser, getAllUser, deleteUserById } = require("../controllers/users.controller");
+const {
+  addUser,
+  getAllUser,
+  deleteUserById,
+} = require("../controllers/users.controller");
 
 // Route menambahkan data user
-router.post(addUser);
+router.post("/", addUser);
 
 // Route mendapatkan semua data user
-router.get(getAllUser);
+router.get("/", getAllUser);
 
 // Route untuk menghapus data berdasarkan ID
-router.delete("/:id", deleteUserById);
+router.delete("/", deleteUserById);
 
 module.exports = router;
