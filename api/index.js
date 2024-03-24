@@ -9,7 +9,7 @@ const app = express();
 app.use(bodyParser.json());
 
 // menjalankan database
-connectToDatabase();
+//connectToDatabase();
 
 app.get("/", (req, res) => {
   res.status(200).send("Selamat datang di server Node.js!");
