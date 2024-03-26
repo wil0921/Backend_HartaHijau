@@ -11,6 +11,9 @@ router.post('/verify', authController.verifyOTP);
 // Route login
 router.post('/login', authController.login);
 
+// Route forgot password
+router.post('/forgotpassword', authController.forgotPassword);
+
 // Route secure user
 router.get('/secure', authMiddleware.authenticateToken, authController.secureAuth);
 
