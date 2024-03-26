@@ -1,31 +1,29 @@
 const qr = require("qrcode");
-const { MongoClient } = require("mongodb");
-require('dotenv').config();
+const connectToDatabase = require("./src/config/database");
 
-mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+const createQRCode = async () => {
+  try {
+    const db = await connectToDatabase();
 
-const userSchema = new mongoose.Schema({
-    name: String,
-    phoneNumber: String,
-    id: String
-});
+    // Mengambil data dari MongoDB
+    const users = await db.collection("Users").find().toArray();
+    console.log("users:", users); // Output users untuk pengecekan
 
-const User = mongoose.model("User", userSchema);
+    users.forEach(async (user) => {
+      let stJson = JSON.stringify(user);
+      console.log("string user:", stJson); // Output string user untuk pengecekan
 
-// Mengambil data dari MongoDB dan membuat kode QR
-User.find({}, (err, users) => {
-    if (err) {
-        console.error("Error:", err);
-        return;
-    }
-
-    users.forEach(user => {
-        let stJson = JSON.stringify(user);
-
-        // Membuat kode QR
-        qr.toFile(`qr_${user.name}.png`, stJson, function(err, code) {
-            if (err) console.error("Error:", err);
-            else console.log(`Kode QR telah dibuat untuk pengguna dengan nama ${user.name} dan ID ${user.id}`);
-        });
+      // Membuat kode QR
+      const QRCode = await qr.toFile(`qr_${user.username}.png`, stJson);
+      console.log(
+        `Kode QR telah dibuat untuk pengguna dengan nama ${user.username} dan ID ${user._id}`
+      );
+      console.log(QRCode);
     });
-});
+  } catch (err) {
+    console.error("Error:", err);
+    return;
+  }
+};
+
+createQRCode();
