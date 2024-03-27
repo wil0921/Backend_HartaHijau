@@ -9,9 +9,11 @@ const createQRCode = async () => {
     const users = await db.collection("Users").find().toArray();
     console.log("users:", users); // Output users untuk pengecekan
 
-    users.forEach(async (user) => {
+    // membuat kode QR untuk setiap data users
+    for (const user of users) {
+      // Mengubah data user menjadi bentuk string
       let stJson = JSON.stringify(user);
-      console.log("string user:", stJson); // Output string user untuk pengecekan
+      console.log("string user:", stJson);
 
       // Membuat kode QR
       const QRCode = await qr.toFile(`qr_${user.username}.png`, stJson);
@@ -19,7 +21,7 @@ const createQRCode = async () => {
         `Kode QR telah dibuat untuk pengguna dengan nama ${user.username} dan ID ${user._id}`
       );
       console.log(QRCode);
-    });
+    }
   } catch (err) {
     console.error("Error:", err);
     return;
