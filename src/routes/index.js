@@ -4,7 +4,7 @@ const authRoute = require("./auth.route");
 const userRoute = require('./users.route');
 const transactionRoute = require('./transactions.route')
 
-routes.use("/api/v1", authRoute);
+routes.use("/api/v1/auth", authRoute);
 routes.use("/api/v1/users", userRoute);
 routes.use('/api/v1/transactions', transactionRoute);
 
