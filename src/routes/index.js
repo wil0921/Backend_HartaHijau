@@ -6,6 +6,6 @@ const transactionRoute = require('./transactions.route')
 
 routes.use("/api/v1", authRoute);
 routes.use("/api/v1/users", userRoute);
-routes.use('/api/v1/transfer', transactionRoute);
+routes.use('/api/v1/transactions', transactionRoute);
 
 module.exports = routes;
