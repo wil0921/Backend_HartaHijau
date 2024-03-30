@@ -70,3 +70,4 @@
 - Fix twilio
 - fix database configuration
 - continue writing API docs
+- testing auth handler
