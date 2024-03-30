@@ -1,7 +1,6 @@
 const qr = require("qrcode");
-const fs = require("fs");
-const path = require("path");
-const uploadImageToCloudinary = require('../utils/cloudinary');
+const uploadImageToCloudinary = require("../utils/cloudinary");
+const connectToDatabase = require("../config/database");
 
 const transferBalance = async (req, res) => {
   const { sender, receiver, amount } = req.body;
@@ -28,30 +27,32 @@ const transferBalance = async (req, res) => {
 
   // Step 3: Use withTransaction to start a transaction, execute the callback, and commit (or abort on error)
   try {
-    await session.withTransaction(async () => {
-      // update sender poin
-      await collection.updateOne(
-        { sender: sender._id },
-        { poin: sender.poin - amount },
-        { session }
-      );
-      // update receiver poin
-      await collection.updateOne(
-        { sender: receiver._id },
-        { poin: receiver.poin + amount },
-        { session }
-      );
+    const pool = await connectToDatabase();
 
-      return res.status(200).json({
-        status: true,
-        message: `Berhasil mengirim ${amount} poin ke ${receiver}`,
-      });
-    }, transactionOptions);
+    // start transaction
+    pool.beginTransaction();
+
+    // decrease sender poin
+    const updateSenderQuery =
+      "UPDATE FROM users SET poin = poin - ? WHERE id = ?";
+    await pool.query(updateSenderQuery, [amount, sender.id]);
+
+    // increase receiver poin
+    const updateReceiverQuery =
+      "UPDATE FROM users SET poin = poin + ? WHERE id = ?";
+    await pool.query(updateReceiverQuery, [amount, receiver.id]);
+
+    // commit changes
+    await pool.commit();
+
+    return res.status(200).json({
+      status: true,
+      message: `Berhasil mengirim ${amount} poin ke pengguna dengan nomor ${receiver.phoneNumber}`,
+    });
   } catch (err) {
-    await session.abortTransaction();
-    session.endSession();
-
-    console.error(err);
+    // Rollback trnsactions if there's any error
+    await pool.rollback();
+    console.error("Error sending poin poin:", err);
 
     return res.status(500).json({
       status: false,
@@ -59,8 +60,8 @@ const transferBalance = async (req, res) => {
       error: err.message,
     });
   } finally {
-    await session.endSession();
-    await client.close();
+    // End the connection when finished
+    await pool.end();
   }
 };
 
@@ -71,13 +72,14 @@ const generateQRCode = async (req, res) => {
   if (!phoneNumber || !username) {
     return res.status(400).json({
       status: false,
-      message: "Kesalahan: Data pengguna tidak lengkap. Pastikan Anda menyediakan phoneNumber dan username.",
+      message:
+        "Kesalahan: Data pengguna tidak lengkap. Pastikan Anda menyediakan nomor telepon dan username.",
     });
   }
 
   try {
     const user = { phoneNumber, username };
-    const stringUser = JSON.stringify(user)
+    const stringUser = JSON.stringify(user);
 
     // Membuat kode QR
     const qrDataUrl = await qr.toDataURL(stringUser);
@@ -90,10 +92,9 @@ const generateQRCode = async (req, res) => {
       message: "Berhasil membuat kode QR",
       qr_code_url: result.secure_url,
     });
-
   } catch (err) {
     console.error("Error:", err);
-    
+
     return res.status(500).json({
       status: false,
       message: "Terjadi kesalahan saat membuat kode QR",

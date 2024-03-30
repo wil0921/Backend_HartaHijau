@@ -7,33 +7,33 @@ const connectToDatabase = require("../config/database");
 // Register controller
 const register = async (req, res) => {
   const { phoneNumber, username, password } = req.body;
-  const db = await connectToDatabase();
-  const collection = db.collection("Users");
-  const user = await collection.find({ phoneNumber });
 
-  // authentication
-  if (user.length) {
-    return res.status(400).json({
-      status: false,
-      message: "Nomor telepon sudah terdaftar",
-    });
-  }
-
-  //hashing password
-  const saltRounds = 10;
-  const hashedPassword = bcrypt.hash(password, saltRounds);
-
-  // input user into db
-  const newUser = {
-    phoneNumber,
-    username,
-    password: hashedPassword,
-    verified: false,
-  };
-
-  // saving user into db (will return the new user)
   try {
-    const result = await collection.insertOne(newUser);
+    // check if user already register
+    const pool = await connectToDatabase();
+    const [user] = await pool.query(
+      `SELECT * FROM users WHERE phoneNumber = ?`,
+      [phoneNumber]
+    );
+
+    // authentication
+    if (user.length) {
+      return res.status(400).json({
+        status: false,
+        message: "Nomor telepon sudah terdaftar",
+      });
+    }
+
+    // hashing password
+    const saltRounds = 10;
+    const hashedPassword = bcrypt.hash(password, saltRounds);
+
+    // insert new user into db
+    const query =
+      "INSERT INTO users (phoneNumber, username, password, verified) VALUES (?, ?, ?, ?)";
+    const values = [phoneNumber, username, hashedPassword, false];
+    const [result] = await pool.query(query, values);
+
     // sending otp into new user
     sendOTPVerification(result, res);
   } catch (err) {
@@ -41,23 +41,21 @@ const register = async (req, res) => {
     return res.status(400).json({
       status: false,
       message: "Terjadi kesalahan saat menambah user",
-      error: error.message,
+      error: err.message,
     });
   }
 };
 
-const sendOTPVerification = async ({ _id, phoneNumber }, res) => {
-  const db = await connectToDatabase();
-  const collection = db.collection("OTP_Verification");
-  // create otp
-  const otp = Math.floor(100000 + Math.random() * 900000);
-  // twilio config
-  const TWILIO_PHONE_NUMBER = process.env.TWILIO_PHONE_NUMBER;
-  const ACCOUNT_ID = process.env.ACCOUNT_ID;
-  const AUTH_TOKEN = process.env.AUTH_TOKEN;
-  const TWILIO_CLIENT = twilio(ACCOUNT_ID, AUTH_TOKEN);
-
+const sendOTPVerification = async ({ id, phoneNumber }, res) => {
   try {
+    // create otp
+    const otp = Math.floor(100000 + Math.random() * 900000);
+    // twilio config
+    const TWILIO_PHONE_NUMBER = process.env.TWILIO_PHONE_NUMBER;
+    const ACCOUNT_ID = process.env.ACCOUNT_ID;
+    const AUTH_TOKEN = process.env.AUTH_TOKEN;
+    const TWILIO_CLIENT = twilio(ACCOUNT_ID, AUTH_TOKEN);
+
     // send otp using twilio
     await TWILIO_CLIENT.messages.create({
       body: `Kode OTP Anda: ${otp}`,
@@ -69,16 +67,12 @@ const sendOTPVerification = async ({ _id, phoneNumber }, res) => {
     const saltRounds = 10;
     const hashedOTP = bcrypt.hash(otp, saltRounds);
 
-    // input otp into db
-    const newOTPVerification = {
-      userId: _id,
-      otp: hashedOTP,
-      createdAt: Date.now(),
-      expiresAt: Date.now() + 3600000, // expires in 1 hour
-    };
-
-    // saving otp into db
-    await collection.insertOne(newOTPVerification);
+    // insert otp into db
+    const pool = await connectToDatabase();
+    const query =
+      "INSERT INTO otp_verifications (userId, otp, createdAt, expiresAt) VALUES (?, ?, ?, ?)";
+    const values = [id, hashedOTP, Date.now(), Date.now() + 3600000]; // expires in 1 hour
+    await pool.query(query, values);
 
     return res.status(200).json({
       status: false,
@@ -97,90 +91,123 @@ const sendOTPVerification = async ({ _id, phoneNumber }, res) => {
 // Verify User controller
 const verifyOTP = async (req, res) => {
   const { userId, otp } = req.body;
-  const db = await connectToDatabase();
-  const user = db.collection("Users").find({ phoneNumber });
 
   // authentication
-  if (!userId || !otp) {
+  if (!userId) {
+    return res.status(401).json({
+      status: false,
+      message: "Harap cantumkan userId",
+    });
+  } else if (!otp) {
     return res.status(401).json({
       status: false,
       message: "Kode OTP tidak boleh kosong",
     });
   }
 
-  const OTPVerificationRecord = db
-    .collection("OTP_verification")
-    .find({ userId });
+  try {
+    const pool = await connectToDatabase();
+    const [OTPVerificationRecord] = await pool.query(
+      `SELECT * FROM otp_verification WHERE userId = ?`,
+      [userId]
+    );
 
-  // if verification data record doesn't exist
-  if (OTPVerificationRecord.length <= 0) {
-    return res.status(404).json({
-      message: "nomor tersebut sudah terverifikasi. silahkan login atau signup",
+    // validate otp verification record
+    if (OTPVerificationRecord.length <= 0) {
+      return res.status(404).json({
+        message:
+          "nomor tersebut sudah terverifikasi. silahkan login atau signup",
+      });
+    }
+
+    const { expiresAt } = OTPVerificationRecord[0];
+
+    // validate expired otp
+    if (Date.now() > expiresAt) {
+      // delete expired otp verification
+      await pool.query("DELETE FROM otp_verifications WHERE userId = ?", [
+        userId,
+      ]);
+      return res.status(401).json({
+        status: false,
+        message:
+          "Maaf, kode otp tersebut telah kadaluarsa. Silahkan kirim permintaan OTP lagi.",
+      });
+    }
+
+    const hashedOTP = OTPVerificationRecord[0].otp;
+    const validOTP = bcrypt.compare(otp, hashedOTP);
+    // validate not valid otp
+    if (!validOTP) {
+      return res.status(401).json({
+        status: false,
+        message:
+          "Maaf, kode otp yang anda masukkan salah. Silahkan periksa lagi.",
+      });
+    }
+
+    // update user that success otp verification
+    const query = "UPDATE users SET verified = ? WHERE id = ?";
+    const values = [true, userId];
+    await pool.query(query, values);
+    // delete success otp verification
+    await pool.query("DELETE FROM otp_verifications WHERE id = ?", [userId]);
+
+    //generate jwt token
+    const [user] = await pool.query("SELECT * FROM users WHERE id = ?", [
+      userId,
+    ]);
+    const token = jwt.sign({ userId: user.id }, "secret_key", {
+      expiresIn: "1h",
     });
-  }
 
-  const { expiresAt } = OTPVerificationRecord[0];
-  const hashedOTP = OTPVerificationRecord[0].otp;
-
-  // if otp already expired
-  if (Date.now() > expiresAt) {
-    // delete verification otp if already expired
-    await db.collection("OTP_verification").deleteMany({ userId });
-    return res.status(401).json({
+    return res.status(200).json({
+      status: true,
+      message: "nomor berhasil terverifikasi",
+      token,
+    });
+  } catch (err) {
+    console.error("Error verifying OTP:", err);
+    return res.status(500).json({
       status: false,
-      message:
-        "Maaf, kode otp tersebut telah kadaluarsa. Silahkan kirim permintaan OTP lagi.",
+      message: "Terjadi kesalahan saat memverifikasi OTP",
+      error: err.message,
     });
   }
-
-  const validOTP = bcrypt.compare(otp, hashedOTP);
-  // if otp doesn't valid
-  if (!validOTP) {
-    return res.status(401).json({
-      status: false,
-      message: "Maaf, kode otp yang anda masukkan. Silahkan periksa lagi.",
-    });
-  }
-
-  // if verification success
-  await db.collection("User").updateOne({ _id: userId }, { verified: true });
-  // delete verification otp if already expired
-  await db.collection("OTP_verification").deleteMany({ userId });
-
-  //generate jwt token
-  const token = jwt.sign({ userId: user.id }, "secret_key", {
-    expiresIn: "1h",
-  });
-
-  return res.status(200).json({
-    status: true,
-    message: "nomor berhasil terverifikasi",
-    token,
-  });
 };
 
 // Login controller
 const login = async (req, res) => {
   const { phoneNumber, password } = req.body;
-  const db = await connectToDatabase();
-  const collection = db.collection("Users");
-  // search user by phone number
-  const user = await collection.find((u) => u.phoneNumber === phoneNumber);
+  try {
+    // search user by phone number
+    const pool = await connectToDatabase();
+    const [user] = await pool.query(
+      "SELECT * FROM users WHERE phoneNUmber = ?",
+      [phoneNumber]
+    );
+    // authentication
+    if (!user || user.password !== password) {
+      return res
+        .status(401)
+        .json({ status: false, message: "Nomor telepon atau password salah" });
+    }
 
-  // authentication
-  if (!user || user.password !== password) {
-    return res
-      .status(401)
-      .json({ status: false, message: "Nomor telepon atau password salah" });
+    //generate jwt token
+    const token = jwt.sign({ userId: user.id }, "secret_key", {
+      expiresIn: "1h",
+    });
+
+    //login success
+    res.status(200).json({ status: true, message: "Berhasil login", token });
+  } catch (err) {
+    console.error("Error login:", err);
+    return res.status(500).json({
+      status: false,
+      message: "Terjadi kesalahan saat mencoba login.",
+      error: err.message,
+    });
   }
-
-  //generate jwt token
-  const token = jwt.sign({ userId: user.id }, "secret_key", {
-    expiresIn: "1h",
-  });
-
-  //login success
-  res.status(200).json({ status: true, message: "Berhasil login", token });
 };
 
 // Secure User controller
@@ -199,12 +226,13 @@ const forgotPassword = async (req, res) => {
     });
   }
 
-  const db = await connectToDatabase();
-  const collection = db.collection("Users");
-
   try {
     // check if user exist
-    const user = await collection.findOne({ phoneNumber });
+    const pool = await connectToDatabase();
+    const [user] = await pool.query(
+      "SELECT * FROM users WHERE phoneNumber = ?",
+      [phoneNumber]
+    );
 
     // if user doesn't exist
     if (!user) {
@@ -222,10 +250,10 @@ const forgotPassword = async (req, res) => {
       });
     }
 
-    const updatedUser = await collection.updateOne(
-      { phoneNumber },
-      { password }
-    );
+    // update user password
+    const query = "UPDATE users SET password = ? WHERE phoneNumber = ?";
+    const values = [password, phoneNumber];
+    const updatedUser = await pool.query(query, values);
 
     return res.status(200).json({
       status: true,
@@ -233,7 +261,7 @@ const forgotPassword = async (req, res) => {
       updatedUser,
     });
   } catch (err) {
-    console.error(err);
+    console.error("Error updating password:", err);
     return res.status(500).json({
       status: false,
       message:

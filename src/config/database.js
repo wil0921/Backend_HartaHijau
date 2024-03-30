@@ -1,16 +1,16 @@
-const { MongoClient } = require("mongodb");
-require('dotenv').config();
+const mysql2 = require("mysql2/promise");
+require("dotenv").config();
 
-const client = new MongoClient(process.env.MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-});
+const dbConfig = {
+  host: "localhost",
+  user: "root",
+  database: "test",
+};
 
 const connectToDatabase = async () => {
   try {
-    await client.connect();
-    console.log("Terhubung ke database MongoDB");
-    return client.db(process.env.dbName);
+    const pool = await mysql2.createPool(dbConfig);
+    return pool;
   } catch (error) {
     console.error("Koneksi ke database gagal:", error);
     throw error;
