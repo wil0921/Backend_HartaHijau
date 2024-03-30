@@ -1,3 +1,7 @@
+const qr = require("qrcode");
+const fs = require("fs");
+const path = require("path");
+
 const transferBalance = async (req, res) => {
   const { sender, receiver, amount } = req.body;
   const db = await connectToDatabase();
@@ -59,4 +63,40 @@ const transferBalance = async (req, res) => {
   }
 };
 
-module.exports = transferBalance;
+const generateQRCode = async (req, res) => {
+  const { phoneNumber, username } = req.body;
+
+  // Verifikasi data user
+  if (!phoneNumber || !username) {
+    return res.status(400).json({
+      status: false,
+      message: "Kesalahan: Data pengguna tidak lengkap. Pastikan Anda menyediakan phoneNumber dan username.",
+    });
+  }
+
+  try {
+    const user = { phoneNumber, username };
+    const stringUser = JSON.stringify(user)
+
+    // Membuat kode QR
+    const qrImagePath = path.join(__dirname, `qr_${username}.png`)
+    await qr.toFile(qrImagePath, stringUser);
+
+    return res.status(201).json({
+      status: true,
+      message: "Kode QR telah berhasil dibuat.",
+      qrcode: fs.readFileSync(qrImagePath, { encoding: 'base64' })
+    });
+
+  } catch (err) {
+    console.error("Error:", err);
+    
+    return res.status(500).json({
+      status: false,
+      message: "Terjadi kesalahan saat membuat kode QR",
+      error: err.message,
+    });
+  }
+};
+
+module.exports = { transferBalance, generateQRCode };
