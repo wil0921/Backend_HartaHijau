@@ -4,7 +4,7 @@
 
 - Endpoint: `POST` `api/v1/auth/register`
 
-- Required Request Body:
+- Example Request Body:
 
 ```
 {
