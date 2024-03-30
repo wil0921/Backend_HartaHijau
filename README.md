@@ -65,3 +65,8 @@
     updatedUser,
 }
 ```
+
+# To Do List:
+- Fix twilio
+- fix database configuration
+- continue writing API docs
