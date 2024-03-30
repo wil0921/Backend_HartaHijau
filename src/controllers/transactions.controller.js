@@ -1,6 +1,7 @@
 const qr = require("qrcode");
 const fs = require("fs");
 const path = require("path");
+const uploadImageToCloudinary = require('../utils/cloudinary');
 
 const transferBalance = async (req, res) => {
   const { sender, receiver, amount } = req.body;
@@ -79,13 +80,15 @@ const generateQRCode = async (req, res) => {
     const stringUser = JSON.stringify(user)
 
     // Membuat kode QR
-    const qrImagePath = path.join(__dirname, `qr_${username}.png`)
-    await qr.toFile(qrImagePath, stringUser);
+    const qrDataUrl = await qr.toDataURL(stringUser);
 
-    return res.status(201).json({
+    // Upload gambar QR code ke Cloudinary
+    const result = await uploadImageToCloudinary(qrDataUrl);
+
+    return res.status(200).json({
       status: true,
-      message: "Kode QR telah berhasil dibuat.",
-      qrcode: fs.readFileSync(qrImagePath, { encoding: 'base64' })
+      message: "Berhasil membuat kode QR",
+      qr_code_url: result.secure_url,
     });
 
   } catch (err) {
