@@ -1,7 +1,11 @@
-const router = require('express').Router();
+const router = require("express").Router();
 
-const transferBalance = require('../controllers/transactions.controller');
+const {
+  transferBalance,
+  generateQRCode,
+} = require("../controllers/transactions.controller");
 
-router.post(transferBalance);
+router.post('/send', transferBalance);
+router.post('/generate-qrcode', generateQRCode);
 
 module.exports = router;
