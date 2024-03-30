@@ -191,11 +191,11 @@ const secureAuth = (req, res) => {
 // Forgot Password Controller
 const forgotPassword = async (req, res) => {
   const { phoneNumber, password } = req.body;
-  // Validasi input
-  if (!phoneNumber || !password) {
+  // Validasi input phoneNumber
+  if (!phoneNumber) {
     return res.status(400).json({
       status: false,
-      message: "Nomor telepon dan password diperlukan.",
+      message: "Nomor telepon diperlukan.",
     });
   }
 
@@ -214,10 +214,19 @@ const forgotPassword = async (req, res) => {
       });
     }
 
+    // Validasi input password
+    if (!password) {
+      return res.status(400).json({
+        status: false,
+        message: "Kata sandi baru diperlukan.",
+      });
+    }
+
     const updatedUser = await collection.updateOne(
       { phoneNumber },
       { password }
     );
+
     return res.status(200).json({
       status: true,
       message: "Password berhasil diperbarui",
@@ -227,12 +236,19 @@ const forgotPassword = async (req, res) => {
     console.error(err);
     return res.status(500).json({
       status: false,
-      message: "Terjadi kesalahan saat mengganti password. Silakan coba lagi nanti.",
+      message:
+        "Terjadi kesalahan saat mengganti password. Silakan coba lagi nanti.",
       error: err.message,
     });
   }
 };
 
 //menggabungkan semua auth controller kedalam 1 variabel agar mudah dikelola
-const authController = { register, verifyOTP, login, secureAuth, forgotPassword };
+const authController = {
+  register,
+  verifyOTP,
+  login,
+  secureAuth,
+  forgotPassword,
+};
 module.exports = authController;
