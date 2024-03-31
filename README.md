@@ -66,7 +66,54 @@
 }
 ```
 
+## Transaction generate QR Code (under development / not tested yet)
+
+- Endpoint: `POST` `/api/v1/transactions/generate-qrcode`
+
+- Example Request Body:
+
+```
+{
+    "phoneNumber": 081234567890,
+    "username": "John Doe"
+}
+```
+
+- Response Body Success:
+
+```
+{
+    status: true,
+    message: "Berhasil membuat kode QR",
+    qr_code_url: result.secure_url,
+}
+```
+
+## Transaction transfer balance (under development / not tested yet)
+
+- Endpoint: `POST` `/api/v1/transactions/send`
+
+- Example Request Body:
+
+```
+{
+    sender: 081234567890,
+    receiver: 080987654321,
+    amount: 50
+}
+```
+
+- Response Body Success:
+
+```
+{
+    status: true,
+    message: 'Berhasil mengirim 50 poin ke pengguna dengan nomor 080987654321',
+}
+```
+
 # To Do List:
+
 - Fix twilio
 - fix database configuration
 - continue writing API docs
