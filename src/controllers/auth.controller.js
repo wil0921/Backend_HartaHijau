@@ -1,6 +1,7 @@
 const twilio = require("twilio");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
+const usersModel = require('../models/users.model')
 
 const connectToDatabase = require("../config/database");
 
@@ -10,11 +11,7 @@ const register = async (req, res) => {
 
   try {
     // check if user already register
-    const pool = await connectToDatabase();
-    const [user] = await pool.query(
-      `SELECT * FROM users WHERE phoneNumber = ?`,
-      [phoneNumber]
-    );
+    const [user] = await usersModel.getUserById()
 
     // authentication
     if (user.length) {

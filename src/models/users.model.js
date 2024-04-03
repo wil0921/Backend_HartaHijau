@@ -22,6 +22,13 @@ const getUserById = (userId) => {
   return pool.query(query, values)
 }
 
+const getUserByPhoneNumber = (phoneNumber) => {
+  const query = 'SELECT * FROM USER WHERE id = ?';
+  const values = [phoneNumber];
+
+  return pool.query(query, values)
+}
+
 const updateUserById = (field, value, userId) => {
   const query = `UPDATE users SET ${field} = ? WHERE id = ?`;
   const values = [value, userId];
@@ -40,6 +47,7 @@ module.exports = {
   createNewUser,
   getAllUser,
   getUserById,
+  getUserByPhoneNumber,
   updateUserById,
   deleteUserById
 };
