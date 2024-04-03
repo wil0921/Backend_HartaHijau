@@ -1,7 +1,7 @@
 const connectToDatabase = require("../config/database");
 const bcrypt = require("bcrypt");
 
-const addUser = async (req, res) => {
+const createNewUser = async (req, res) => {
   const { phoneNumber, username, password } = req.body;
 
   // hashing password
