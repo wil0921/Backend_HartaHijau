@@ -8,9 +8,9 @@ const dbConfig = {
   database: process.env.DATABASE,
 };
 
-const connectToDatabase = async () => {
+const connectToDatabase = () => {
   try {
-    const pool = await mysql2.createPool(dbConfig);
+    const pool = mysql2.createPool(dbConfig);
     return pool;
   } catch (error) {
     console.error("Koneksi ke database gagal:", error);
