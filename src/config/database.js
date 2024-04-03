@@ -2,9 +2,10 @@ const mysql2 = require("mysql2/promise");
 require("dotenv").config();
 
 const dbConfig = {
-  host: "localhost",
-  user: "root",
-  database: "test",
+  host: process.env.HOST,
+  user: process.env.USER,
+  password: process.env.PASSWORD,
+  database: process.env.DATABASE,
 };
 
 const connectToDatabase = async () => {
