@@ -1,5 +1,6 @@
-const connectToDatabase = require("../config/database");
 const bcrypt = require("bcrypt");
+const { v4: uuidv4 } = require("uuid"); // to generate unique random id
+const usersModel = require("../models/users.model");
 
 const createNewUser = async (req, res) => {
   const { phoneNumber, username, password } = req.body;
@@ -9,22 +10,25 @@ const createNewUser = async (req, res) => {
   const hashedPassword = bcrypt.hash(password, saltRounds);
 
   try {
-    const pool = await connectToDatabase();
-    const query =
-      "INSERT INTO users (phoneNumber, username, password, verified) VALUES (?, ?, ?, ?)";
-    const values = [phoneNumber, username, hashedPassword, false];
-    const [result] = await pool.query(query, values);
+    const newUser = {
+      id: uuidv4(),
+      phoneNumber,
+      username,
+      hashedPassword,
+      verified: false,
+    };
+
+    await usersModel.createNewUser(newUser);
 
     return res.status(201).json({
       status: true,
-      message: "Berhasil menambahkan user",
-      result,
+      message: "Berhasil menambahkan pengguna",
     });
   } catch (err) {
-    console.error("Error saat menambahkan user:", err);
+    console.error("Error saat menambahkan pengguna:", err);
     return res.status(500).json({
       status: false,
-      message: "Terjadi kesalahan saat menambah user",
+      message: "Terjadi kesalahan pada server",
       error: err.message,
     });
   }
@@ -32,19 +36,18 @@ const createNewUser = async (req, res) => {
 
 const getAllUser = async (req, res) => {
   try {
-    const pool = await connectToDatabase();
-    const [users] = await pool.query("SELECT * FROM users");
+    const [users] = await usersModel.getAllUser();
 
     return res.status(200).json({
       status: true,
-      message: "Berhasil mengambil user",
+      message: "Berhasil mengambil semua pengguna",
       users,
     });
   } catch (err) {
-    console.error("Error saat mengambil user:", err);
+    console.error("Error saat mengambil semua pengguna:", err);
     return res.status(500).json({
       status: false,
-      message: "Terjadi kesalahan saat mengambil user",
+      message: "Terjadi kesalahan pada server",
       error: err.message,
     });
   }
@@ -54,10 +57,7 @@ const deleteUserById = async (req, res) => {
   const id = req.query.id;
 
   try {
-    const pool = await connectToDatabase();
-    const [result] = await pool.query("DELETE FROM users WHERE id = ?", [id]);
-
-    console.log(deletedUser);
+    const [result] = await usersModel.deleteUserById(id);
 
     return result.affectedRows
       ? res.status(200).json({
@@ -66,7 +66,7 @@ const deleteUserById = async (req, res) => {
         })
       : res.status(404).json({
           status: false,
-          message: `Pengguna dengan ID ${id} berhasil dihapus`,
+          message: `Pengguna dengan ID ${id} tidak ditemukan`,
         });
   } catch (err) {
     console.error("Error saat menghapus user:", err);
@@ -78,4 +78,4 @@ const deleteUserById = async (req, res) => {
   }
 };
 
-module.exports = { addUser, getAllUser, deleteUserById };
+module.exports = { createNewUser, getAllUser, deleteUserById };
