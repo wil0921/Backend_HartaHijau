@@ -8,14 +8,6 @@ const dbConfig = {
   database: process.env.DATABASE,
 };
 
-const connectToDatabase = () => {
-  try {
-    const pool = mysql2.createPool(dbConfig);
-    return pool;
-  } catch (error) {
-    console.error("Koneksi ke database gagal:", error);
-    throw error;
-  }
-};
+const pool = mysql2.createPool(dbConfig);
 
-module.exports = connectToDatabase;
+module.exports = pool;
