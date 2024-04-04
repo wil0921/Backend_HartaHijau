@@ -39,7 +39,12 @@ const register = async (req, res) => {
     const [result] = await usersModel.createNewUser(newUser);
 
     // sending otp into new user
-    sendOTPVerification(result);
+    await sendOTPVerification(result);
+
+    return res.status(200).json({
+      status: true,
+      message: "Pengguna berhasil mendaftar. Silahkan login.",
+    })
   } catch (err) {
     console.error("Error saat menambahkan pengguna:", err);
     return res.status(500).json({
@@ -121,7 +126,7 @@ const verifyOTP = async (req, res) => {
     if (OTPVerificationRecord.length <= 0) {
       return res.status(404).json({
         message:
-          "nomor tersebut sudah terverifikasi. silahkan login atau signup",
+          "nomor tersebut sudah terverifikasi. silahkan login.",
       });
     }
 
