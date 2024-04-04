@@ -44,7 +44,7 @@ const register = async (req, res) => {
     return res.status(200).json({
       status: true,
       message: "Pengguna berhasil mendaftar. Silahkan login.",
-    })
+    });
   } catch (err) {
     console.error("Error saat menambahkan pengguna:", err);
     return res.status(500).json({
@@ -125,8 +125,7 @@ const verifyOTP = async (req, res) => {
     // validate otp verification record
     if (OTPVerificationRecord.length <= 0) {
       return res.status(404).json({
-        message:
-          "nomor tersebut sudah terverifikasi. silahkan login.",
+        message: "nomor tersebut sudah terverifikasi. silahkan login.",
       });
     }
 
@@ -155,7 +154,7 @@ const verifyOTP = async (req, res) => {
     }
 
     // verified user that success otp verification
-    await usersModel.updateUserById(verified, true, userId);
+    await usersModel.updateUserById("verified", true, userId);
     // delete success otp verification record
     await OTPVerificationModel.deleteRecordById(userId);
 
@@ -184,11 +183,7 @@ const login = async (req, res) => {
   const { phoneNumber, password } = req.body;
   try {
     // search user by phone number
-    const pool = await connectToDatabase();
-    const [user] = await pool.query(
-      "SELECT * FROM users WHERE phoneNUmber = ?",
-      [phoneNumber]
-    );
+    const [user] = await usersModel.getUserByPhoneNumber(phoneNumber);
     // authentication
     if (!user || user.password !== password) {
       return res
@@ -202,12 +197,14 @@ const login = async (req, res) => {
     });
 
     //login success
-    res.status(200).json({ status: true, message: "Berhasil login", token });
+    return res
+      .status(200)
+      .json({ status: true, message: "Berhasil login", token });
   } catch (err) {
     console.error("Error login:", err);
     return res.status(500).json({
       status: false,
-      message: "Terjadi kesalahan saat mencoba login.",
+      message: "Terjadi kesalahan pada server",
       error: err.message,
     });
   }
@@ -231,11 +228,7 @@ const forgotPassword = async (req, res) => {
 
   try {
     // check if user exist
-    const pool = await connectToDatabase();
-    const [user] = await pool.query(
-      "SELECT * FROM users WHERE phoneNumber = ?",
-      [phoneNumber]
-    );
+    const [user] = await usersModel.getUserByPhoneNumber(phoneNumber);
 
     // if user doesn't exist
     if (!user) {
@@ -246,7 +239,7 @@ const forgotPassword = async (req, res) => {
     }
 
     // Validasi input password
-    if (!password) {
+    if (!password || user.password == password) {
       return res.status(400).json({
         status: false,
         message: "Kata sandi baru diperlukan.",
@@ -254,9 +247,11 @@ const forgotPassword = async (req, res) => {
     }
 
     // update user password
-    const query = "UPDATE users SET password = ? WHERE phoneNumber = ?";
-    const values = [password, phoneNumber];
-    const updatedUser = await pool.query(query, values);
+    const updatedUser = await usersModel.updateUserById(
+      "password",
+      password,
+      user.id
+    );
 
     return res.status(200).json({
       status: true,
@@ -267,8 +262,7 @@ const forgotPassword = async (req, res) => {
     console.error("Error updating password:", err);
     return res.status(500).json({
       status: false,
-      message:
-        "Terjadi kesalahan saat mengganti password. Silakan coba lagi nanti.",
+      message: "Terjadi kesalahan pada server",
       error: err.message,
     });
   }
