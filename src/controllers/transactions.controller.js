@@ -1,11 +1,10 @@
 const qr = require("qrcode");
 const uploadImageToCloudinary = require("../utils/cloudinary");
-const connectToDatabase = require("../config/database");
+const pool = require("../config/database");
+const transactionsModel = require("../models/transactions.model");
 
 const transferBalance = async (req, res) => {
   const { sender, receiver, amount } = req.body;
-  const db = await connectToDatabase();
-  const collection = db.collection("Users");
 
   // if sender poin is not enought
   if (sender.poin < amount) {
@@ -15,53 +14,21 @@ const transferBalance = async (req, res) => {
     });
   }
 
-  // Step 1: Start a Client Session
-  const session = client.startSession();
-
-  // Step 2: Optional. Define options to use for the transaction
-  const transactionOptions = {
-    readPreference: "primary",
-    readConcern: { level: "local" },
-    writeConcern: { w: "majority" },
-  };
-
-  // Step 3: Use withTransaction to start a transaction, execute the callback, and commit (or abort on error)
   try {
-    const pool = await connectToDatabase();
-
-    // start transaction
-    pool.beginTransaction();
-
-    // decrease sender poin
-    const updateSenderQuery =
-      "UPDATE FROM users SET poin = poin - ? WHERE id = ?";
-    await pool.query(updateSenderQuery, [amount, sender.id]);
-
-    // increase receiver poin
-    const updateReceiverQuery =
-      "UPDATE FROM users SET poin = poin + ? WHERE id = ?";
-    await pool.query(updateReceiverQuery, [amount, receiver.id]);
-
-    // commit changes
-    await pool.commit();
+    await transactionsModel.transferBalance(sender, receiver, amount);
 
     return res.status(200).json({
       status: true,
       message: `Berhasil mengirim ${amount} poin ke pengguna dengan nomor ${receiver.phoneNumber}`,
     });
   } catch (err) {
-    // Rollback trnsactions if there's any error
-    await pool.rollback();
     console.error("Error sending poin poin:", err);
 
     return res.status(500).json({
       status: false,
-      message: "Terjadi kesalahan saat mengirim poin",
+      message: "Terjadi kesalahan pada server",
       error: err.message,
     });
-  } finally {
-    // End the connection when finished
-    await pool.end();
   }
 };
 
@@ -85,7 +52,7 @@ const generateQRCode = async (req, res) => {
     const qrDataUrl = await qr.toDataURL(stringUser);
 
     // Upload gambar QR code ke Cloudinary
-    const result = await uploadImageToCloudinary(qrDataUrl);
+    const result = await uploadImageToCloudinary(qrDataUrl); // expired in 5 min
 
     return res.status(200).json({
       status: true,
