@@ -1,3 +1,5 @@
+const pool = require("../config/database");
+
 const addRecord = (newOTPRecord) => {
   const { userId, otp, createdAt, expiresAt } = newOTPRecord;
   const query = ` INSERT INTO otp_verifications (userId, otp, createdAt, expiresAt) 
