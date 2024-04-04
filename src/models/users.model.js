@@ -23,7 +23,7 @@ const getUserById = (userId) => {
 }
 
 const getUserByPhoneNumber = (phoneNumber) => {
-  const query = 'SELECT * FROM USER WHERE id = ?';
+  const query = 'SELECT * FROM USER WHERE phone_number = ?';
   const values = [phoneNumber];
 
   return pool.query(query, values)
