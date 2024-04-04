@@ -1,7 +1,8 @@
 const twilio = require("twilio");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
-const usersModel = require('../models/users.model')
+const usersModel = require("../models/users.model");
+const OTPVerificationModel = require("../models/OTPVerification.model");
 
 const connectToDatabase = require("../config/database");
 
@@ -11,13 +12,14 @@ const register = async (req, res) => {
 
   try {
     // check if user already register
-    const [user] = await usersModel.getUserById()
+    const [user] = await usersModel.getUserByPhoneNumber(phoneNumber);
 
     // authentication
     if (user.length) {
       return res.status(400).json({
         status: false,
-        message: "Nomor telepon sudah terdaftar",
+        message:
+          "Nomor telepon sudah terdaftar, silahkan gunakan nomor lain atau login.",
       });
     }
 
@@ -25,34 +27,39 @@ const register = async (req, res) => {
     const saltRounds = 10;
     const hashedPassword = bcrypt.hash(password, saltRounds);
 
+    const newUser = {
+      id: uuidv4(),
+      phoneNumber,
+      username,
+      hashedPassword,
+      verified: false,
+    };
+
     // insert new user into db
-    const query =
-      "INSERT INTO users (phoneNumber, username, password, verified) VALUES (?, ?, ?, ?)";
-    const values = [phoneNumber, username, hashedPassword, false];
-    const [result] = await pool.query(query, values);
+    const [result] = await usersModel.createNewUser(newUser);
 
     // sending otp into new user
-    sendOTPVerification(result, res);
+    sendOTPVerification(result);
   } catch (err) {
-    console.error("Error saving user:", err);
-    return res.status(400).json({
+    console.error("Error saat menambahkan pengguna:", err);
+    return res.status(500).json({
       status: false,
-      message: "Terjadi kesalahan saat menambah user",
+      message: "Terjadi kesalahan pada server",
       error: err.message,
     });
   }
 };
 
 const sendOTPVerification = async ({ id, phoneNumber }, res) => {
-  try {
-    // create otp
-    const otp = Math.floor(100000 + Math.random() * 900000);
-    // twilio config
-    const TWILIO_PHONE_NUMBER = process.env.TWILIO_PHONE_NUMBER;
-    const ACCOUNT_ID = process.env.ACCOUNT_ID;
-    const AUTH_TOKEN = process.env.AUTH_TOKEN;
-    const TWILIO_CLIENT = twilio(ACCOUNT_ID, AUTH_TOKEN);
+  // create otp
+  const otp = Math.floor(100000 + Math.random() * 900000);
+  // twilio config
+  const TWILIO_PHONE_NUMBER = process.env.TWILIO_PHONE_NUMBER;
+  const ACCOUNT_ID = process.env.ACCOUNT_ID;
+  const AUTH_TOKEN = process.env.AUTH_TOKEN;
+  const TWILIO_CLIENT = twilio(ACCOUNT_ID, AUTH_TOKEN);
 
+  try {
     // send otp using twilio
     await TWILIO_CLIENT.messages.create({
       body: `Kode OTP Anda: ${otp}`,
@@ -64,22 +71,25 @@ const sendOTPVerification = async ({ id, phoneNumber }, res) => {
     const saltRounds = 10;
     const hashedOTP = bcrypt.hash(otp, saltRounds);
 
-    // insert otp into db
-    const pool = await connectToDatabase();
-    const query =
-      "INSERT INTO otp_verifications (userId, otp, createdAt, expiresAt) VALUES (?, ?, ?, ?)";
-    const values = [id, hashedOTP, Date.now(), Date.now() + 3600000]; // expires in 1 hour
-    await pool.query(query, values);
+    const newOTPRecord = {
+      userId: id,
+      hashedOTP,
+      createdAt: Date.now(),
+      expiresAt: Date.now() + 3600000,
+    };
+
+    // insert otp record into db
+    await OTPVerificationModel.addRecord(newOTPRecord);
 
     return res.status(200).json({
-      status: false,
+      status: true,
       message: "Kode OTP telah dikirimkan ke nomor telepon Anda",
     });
   } catch (err) {
     console.error("Error sending OTP:", err);
     return res.status(500).json({
       status: false,
-      message: "Terjadi kesalahan saat mengirimkan OTP",
+      message: "Terjadi kesalahan pada server",
       error: err.message,
     });
   }
@@ -103,10 +113,8 @@ const verifyOTP = async (req, res) => {
   }
 
   try {
-    const pool = await connectToDatabase();
-    const [OTPVerificationRecord] = await pool.query(
-      `SELECT * FROM otp_verification WHERE userId = ?`,
-      [userId]
+    const [OTPVerificationRecord] = await OTPVerificationModel.getRecordById(
+      userId
     );
 
     // validate otp verification record
@@ -122,9 +130,7 @@ const verifyOTP = async (req, res) => {
     // validate expired otp
     if (Date.now() > expiresAt) {
       // delete expired otp verification
-      await pool.query("DELETE FROM otp_verifications WHERE userId = ?", [
-        userId,
-      ]);
+      await OTPVerificationModel.deleteRecordById(userId);
       return res.status(401).json({
         status: false,
         message:
@@ -143,18 +149,13 @@ const verifyOTP = async (req, res) => {
       });
     }
 
-    // update user that success otp verification
-    const query = "UPDATE users SET verified = ? WHERE id = ?";
-    const values = [true, userId];
-    await pool.query(query, values);
-    // delete success otp verification
-    await pool.query("DELETE FROM otp_verifications WHERE id = ?", [userId]);
+    // verified user that success otp verification
+    await usersModel.updateUserById(verified, true, userId);
+    // delete success otp verification record
+    await OTPVerificationModel.deleteRecordById(userId);
 
     //generate jwt token
-    const [user] = await pool.query("SELECT * FROM users WHERE id = ?", [
-      userId,
-    ]);
-    const token = jwt.sign({ userId: user.id }, "secret_key", {
+    const token = jwt.sign({ userId }, "secret_key", {
       expiresIn: "1h",
     });
 
@@ -167,7 +168,7 @@ const verifyOTP = async (req, res) => {
     console.error("Error verifying OTP:", err);
     return res.status(500).json({
       status: false,
-      message: "Terjadi kesalahan saat memverifikasi OTP",
+      message: "Terjadi kesalahan pada server",
       error: err.message,
     });
   }
