@@ -17,7 +17,10 @@
 - Response Body Success:
 
 ```
-
+{
+    status: true,
+    message: "Pengguna berhasil mendaftar. Silahkan login.",
+}
 ```
 
 ## Auth Login (under development / not tested yet)
