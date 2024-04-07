@@ -1,3 +1,5 @@
+const pool = require('../config/database');
+
 const getUserProfileById = (id) => {
   const query = ` SELECT user.username, user.profile_picture, poin.total_withdrawl, poin.total_earning
                   FROM user
