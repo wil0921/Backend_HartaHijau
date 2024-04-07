@@ -30,3 +30,9 @@ const updateUserProfileById = (id, fields) => {
 
   return pool.query(query, values);
 };
+
+module.exports = {
+  getUserProfileById,
+  getDetailUserProfileById,
+  updateUserProfileById
+}
