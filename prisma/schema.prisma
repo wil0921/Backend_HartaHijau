@@ -8,7 +8,6 @@ datasource db {
 }
 
 model User {
-<<<<<<< HEAD
   id           String    @id @unique(map: "id_UNIQUE") @db.VarChar(225)
   username     String    @db.VarChar(225)
   phone_number String    @unique(map: "phone_number_UNIQUE") @db.VarChar(15)
