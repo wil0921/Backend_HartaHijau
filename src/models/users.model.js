@@ -1,4 +1,4 @@
-const pool = require('../config/database');
+const prisma = require('../config/database');
 
 const createNewUser = (newUser) => {
   const { phoneNumber, username, hashedPassword, verified } = newUser;

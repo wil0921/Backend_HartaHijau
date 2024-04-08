@@ -1,13 +1,5 @@
-const mysql2 = require("mysql2/promise");
-require("dotenv").config();
+const { PrismaClient } = require("@prisma/client");
 
-const dbConfig = {
-  host: process.env.HOST,
-  user: process.env.USER,
-  password: process.env.PASSWORD,
-  database: process.env.DATABASE,
-};
+const prisma = new PrismaClient();
 
-const pool = mysql2.createPool(dbConfig);
-
-module.exports = pool;
+module.exports = prisma;

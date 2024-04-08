@@ -1,4 +1,4 @@
-const pool = require("../config/database");
+const prisma = require("../config/database");
 
 const addRecord = (newOTPRecord) => {
   const { userId, otp, createdAt, expiresAt } = newOTPRecord;
