@@ -14,7 +14,7 @@ model User {
   password         String           @db.VarChar(225)
   verified         Boolean          @default(false)
   profile          Profile?
-  otp_verification OTP_verification?
+  otp_verification Otp_verification?
 }
 
 model Profile {
@@ -26,7 +26,7 @@ model Profile {
   userId          String   @unique
 }
 
-model OTP_verification {
+model Otp_verification {
   id        Int      @id @default(autoincrement())
   otp       Int
   createdAt DateTime @default(now())
