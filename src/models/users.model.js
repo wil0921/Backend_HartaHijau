@@ -1,45 +1,31 @@
-const prisma = require('../config/database');
+const prisma = require("../config/database");
 
 const createNewUser = (newUser) => {
   const { phoneNumber, username, hashedPassword, verified } = newUser;
-  const query = ` INSERT INTO users (phoneNumber, username, password, verified) 
-                  VALUES (?, ?, ?, ?)`;
-  const values = [phoneNumber, username, hashedPassword, verified];
-
-  return pool.query(query, values);
+  return prisma.user.create({
+    data: {
+      phoneNumber: phoneNumber,
+      username: username,
+      password: hashedPassword,
+      verified: verified,
+    },
+  });
 };
 
-const getAllUser = () => {
-  return prisma.user.findMany();
-};
+const getAllUser = () => prisma.user.findMany();
 
-const getUserById = (userId) => {
-  const query = 'SELECT * FROM USER WHERE id = ?';
-  const values = [userId];
-
-  return pool.query(query, values)
-}
+const getUserById = (id) => prisma.user.findUnique({ where: { id } });
 
 const getUserByPhoneNumber = (phoneNumber) => {
-  const query = 'SELECT * FROM USER WHERE phone_number = ?';
-  const values = [phoneNumber];
-
-  return pool.query(query, values)
-}
-
-const updateUserById = (field, value, userId) => {
-  const query = `UPDATE users SET ${field} = ? WHERE id = ?`;
-  const values = [value, userId];
-
-  return pool.query(query, values)
+  return prisma.user.findUnique({ where: { phone_number: phoneNumber } });
 };
 
-const deleteUserById = (userId) => {
-  const query = "DELETE FROM users WHERE id = ?";
-  const values = [userId];
+const updateUserById = (field, value, id) => {
+  const data = { [field]: value };
+  return prisma.user.update({ where: { id }, data });
+};
 
-  return pool.query(query, values);
-}
+const deleteUserById = (id) => prisma.user.delete({ where: { id } });
 
 module.exports = {
   createNewUser,
@@ -47,5 +33,5 @@ module.exports = {
   getUserById,
   getUserByPhoneNumber,
   updateUserById,
-  deleteUserById
+  deleteUserById,
 };
