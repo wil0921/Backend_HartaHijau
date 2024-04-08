@@ -10,9 +10,7 @@ const createNewUser = (newUser) => {
 };
 
 const getAllUser = () => {
-  const query = "SELECT * FROM users";
-
-  return pool.query(query);
+  return prisma.user.findMany();
 };
 
 const getUserById = (userId) => {
