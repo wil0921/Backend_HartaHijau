@@ -6,7 +6,8 @@
   "scripts": {
     "start": "nodemon server.js",
     "migrate": "npx prisma migrate dev --name init",
-    "studio": "npx prisma studio"
+    "studio": "npx prisma studio",
+    "format": "prisma format"
   },
   "author": "",
   "license": "ISC",
