@@ -1,10 +1,30 @@
 const profileModel = require("../models/profile.model");
 
+const createUserProfile = async (req, res) => {
+  const { id } = req.query.id;
+  try {
+    const result = await profileModel.createUserProfile(id);
+
+    return res.status(200).json({
+      status: true,
+      message: "Berhasil membuat profile pengguna",
+      result,
+    });
+  } catch (err) {
+    console.error("Error saat membuat profile:", err);
+    return res.status(500).json({
+      status: false,
+      message: "Terjadi kesalahan pada server",
+      error: err.message,
+    });
+  }
+};
+
 const getUserProfileById = async (req, res) => {
   const id = req.query.id;
 
   try {
-    const [profile] = await profileModel.getUserProfileById(id);
+    const profile = await profileModel.getUserProfileById(id);
 
     return res.status(200).json({
       status: true,
@@ -12,7 +32,7 @@ const getUserProfileById = async (req, res) => {
       profile,
     });
   } catch (err) {
-    console.error("Error saat mengambil semua pengguna:", err);
+    console.error("Error saat mengambil data profile:", err);
     return res.status(500).json({
       status: false,
       message: "Terjadi kesalahan pada server",
@@ -25,7 +45,7 @@ const getDetailUserProfileById = async (req, res) => {
   const id = req.query.id;
 
   try {
-    const [profileDetails] = await profileModel.getDetailUserProfileById(id);
+    const profileDetails = await profileModel.getDetailUserProfileById(id);
 
     return res.status(200).json({
       status: true,
@@ -33,7 +53,7 @@ const getDetailUserProfileById = async (req, res) => {
       profileDetails,
     });
   } catch (err) {
-    console.error("Error saat mengambil semua pengguna:", err);
+    console.error("Error saat mengambil detail profile:", err);
     return res.status(500).json({
       status: false,
       message: "Terjadi kesalahan pada server",
@@ -48,10 +68,7 @@ const updateUserProfileById = async (req, res) => {
   const fields = { profilePicture, username, phoneNumber, email, password };
 
   try {
-    const [updatedProfile] = await profileModel.updateUserProfileById(
-      id,
-      fields
-    );
+    const updatedProfile = await profileModel.updateUserProfileById(id, fields);
 
     return res.status(200).json({
       status: true,
@@ -69,6 +86,7 @@ const updateUserProfileById = async (req, res) => {
 };
 
 module.exports = {
+  createUserProfile,
   getUserProfileById,
   getDetailUserProfileById,
   updateUserProfileById,
