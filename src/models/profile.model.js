@@ -1,5 +1,11 @@
 const prisma = require("../config/database");
 
+const createUserProfile = (userId) => {
+  return prisma.profile.create({
+    data: { userId },
+  });
+};
+
 const getUserProfileById = (userId) => {
   return prisma.profile.findUnique({
     where: { userId },
@@ -30,6 +36,7 @@ const updateUserProfileById = (userId, fields) => {
 };
 
 module.exports = {
+  createUserProfile,
   getUserProfileById,
   getDetailUserProfileById,
   updateUserProfileById,
