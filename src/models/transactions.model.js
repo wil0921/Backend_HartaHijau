@@ -1,31 +1,43 @@
 const prisma = require("../config/database");
+const { v4: uuidv4 } = require("uuid");
 
-const transferBalance = async (sender, receiver, amount) => {
-  try {
-    // start transaction
-    await pool.beginTransaction();
+const transferBalance = async (senderId, recipientId, amount) => {
+  return await prisma.$transaction(async (trx) => {
+    // 1. decrease sender poin balance
+    const sender = await trx.user.update({
+      where: { id: senderId },
+      data: {
+        poin: { decrement: { balance: amount } },
+      },
+    });
 
-    // decrease sender poin
-    const updateSenderQuery =
-      "UPDATE FROM users SET poin = poin - ? WHERE id = ?";
-    const updateSenderValues = [amount, sender.id];
-    await pool.query(updateSenderQuery, updateSenderValues);
+    // 2. verify that the sender's poin balance didn't go below zero.
+    if (sender.poin.balance < 0) {
+      throw new Error(
+        `${sender.username} tidak memiliki saldo yang cukup untuk mengirim ${amount} poin`
+      );
+    }
 
-    // increase receiver poin
-    const updateReceiverQuery =
-      "UPDATE FROM users SET poin = poin + ? WHERE id = ?";
-    const updateReceiverValues = [amount, receiver.id];
-    await pool.query(updateReceiverQuery, updateReceiverValues);
+    // 3. increase recipient poin balance
+    const recipient = await trx.account.update({
+      where: { id: recipientId },
+      data: {
+        poin: { increment: { balance: amount } },
+      },
+    });
 
-    // commit changes
-    await pool.commit();
-  } catch (err) {
-    // Rollback trnsactions if there's any error
-    await pool.rollback();
-  } finally {
-    // End the connection when finished
-    await pool.end();
-  }
+    const transactionHistory = await trx.transaction_history.create({
+      data: {
+        transactionId: uuidv4(),
+        amount,
+        senderId,
+        recipientId,
+        status: "succesful",
+      },
+    });
+
+    return transactionHistory;
+  });
 };
 
 module.exports = {
