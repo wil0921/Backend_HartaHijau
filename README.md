@@ -122,6 +122,7 @@
 - add time limit on qr scan feature
 - add transaction_history tabel
 - add transaction_history feature
+- improve database searching using indexes
 - continue writing poin & profile API docs
 - create news feature
 - upgrade API docs
