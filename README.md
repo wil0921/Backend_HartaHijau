@@ -117,7 +117,11 @@
 
 # To Do List:
 
-- Fix twilio
-- fix database configuration
-- continue writing API docs
+- Fix message gateway
 - testing auth handler
+- add time limit on qr scan feature
+- add transaction_history tabel
+- add transaction_history feature
+- continue writing poin & profile API docs
+- create news feature
+- upgrade API docs
