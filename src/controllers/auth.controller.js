@@ -2,9 +2,8 @@ const twilio = require("twilio");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const usersModel = require("../models/users.model");
+const profileModel = require("../models/profile.model");
 const OTPVerificationModel = require("../models/OTPVerification.model");
-
-const connectToDatabase = require("../config/database");
 
 // Register controller
 const register = async (req, res) => {
@@ -36,10 +35,12 @@ const register = async (req, res) => {
     };
 
     // insert new user into db
-    const [result] = await usersModel.createNewUser(newUser);
+    const result = await usersModel.createNewUser(newUser);
 
     // sending otp into new user
     await sendOTPVerification(result);
+
+    result.verified ? await profileModel.createUserProfile(result.id) : null;
 
     return res.status(200).json({
       status: true,
@@ -118,7 +119,7 @@ const verifyOTP = async (req, res) => {
   }
 
   try {
-    const [OTPVerificationRecord] = await OTPVerificationModel.getRecordById(
+    const OTPVerificationRecord = await OTPVerificationModel.getRecordById(
       userId
     );
 
@@ -183,7 +184,7 @@ const login = async (req, res) => {
   const { phoneNumber, password } = req.body;
   try {
     // search user by phone number
-    const [user] = await usersModel.getUserByPhoneNumber(phoneNumber);
+    const user = await usersModel.getUserByPhoneNumber(phoneNumber);
     // authentication
     if (!user || user.password !== password) {
       return res
@@ -228,7 +229,7 @@ const forgotPassword = async (req, res) => {
 
   try {
     // check if user exist
-    const [user] = await usersModel.getUserByPhoneNumber(phoneNumber);
+    const user = await usersModel.getUserByPhoneNumber(phoneNumber);
 
     // if user doesn't exist
     if (!user) {
