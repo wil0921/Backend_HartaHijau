@@ -1,11 +1,8 @@
 const router = require("express").Router();
 
-const {
-  transferBalance,
-  generateQRCode,
-} = require("../controllers/transactions.controller");
+const { transactionsController } = require("../controllers");
 
-router.post('/send', transferBalance);
-router.post('/generate-qrcode', generateQRCode);
+router.post("/send", transactionsController.transferBalance);
+router.post("/generate-qrcode", transactionsController.generateQRCode);
 
 module.exports = router;
