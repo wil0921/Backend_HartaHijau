@@ -1,3 +1,4 @@
-const generateOTP = require('./generateOTP');
+const generateOTP = require("./generateOTP");
+const validator = require("./validator");
 
-module.exports = generateOTP
+module.exports = { generateOTP, validator };
