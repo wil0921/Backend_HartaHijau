@@ -121,6 +121,7 @@
 - testing auth handler
 - add time limit on qr scan feature
 - add transaction_history feature
+- remove unnecessary file
 - improve database searching using indexes
 - continue writing poin & profile API docs
 - create news feature
