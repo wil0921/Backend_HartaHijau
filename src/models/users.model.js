@@ -1,13 +1,14 @@
 const prisma = require("../config/database");
 
 const createNewUser = (newUser) => {
-  const { phoneNumber, username, hashedPassword, verified } = newUser;
+  const { id, phoneNumber, username, password, verified } = newUser;
   return prisma.user.create({
     data: {
-      phoneNumber: phoneNumber,
-      username: username,
-      password: hashedPassword,
-      verified: verified,
+      id,
+      phone_number: phoneNumber,
+      username,
+      password,
+      verified,
     },
   });
 };
