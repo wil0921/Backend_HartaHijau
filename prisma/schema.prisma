@@ -31,7 +31,7 @@ model Profile {
 
 model Otp_verification {
   id        Int      @id @default(autoincrement())
-  otp       Int
+  otp       String
   createdAt DateTime @default(now())
   expiresAt DateTime
   user      User     @relation(fields: [userId], references: [id])
