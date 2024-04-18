@@ -117,7 +117,7 @@
 
 # To Do List:
 
-- Fix message gateway
+- add redis for otp record
 - testing auth handler
 - add time limit on qr scan feature
 - add transaction_history feature
