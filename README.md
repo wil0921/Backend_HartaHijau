@@ -23,6 +23,50 @@
 }
 ```
 
+## Auth sendOTPVerification (under development / not tested yet)
+
+- Endpoint: `POST` `api/v1/auth/otp/send`
+
+- Example Request Body:
+
+```
+{
+    "phoneNumber": 081234567890
+}
+```
+
+- Response Body Success:
+
+```
+{ 
+    status: true,
+    message: "kode otp telah berhasil dikirim ke nomor 081234567890. Silahkan melakukan verifikasi otp"
+}
+```
+
+## Auth verifyOTP (under development / not tested yet)
+
+- Endpoint: `POST` `api/v1/auth/otp/verify`
+
+- Example Request Body:
+
+```
+{
+    "userId": "jay2837-28de3ygf-nsj374ss",
+    "otp": "1234"
+}
+```
+
+- Response Body Success:
+
+```
+{
+    status: true,
+    message: "Pengguna berhasil terverifikasi",
+    token,
+}
+```
+
 ## Auth Login (under development / not tested yet)
 
 - Endpoint: `GET` `api/v1/auth/login`
