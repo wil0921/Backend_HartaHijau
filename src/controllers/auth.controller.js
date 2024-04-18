@@ -64,7 +64,7 @@ const register = async (req, res) => {
 };
 
 const sendOTPVerification = async (req, res) => {
-  const { phoneNumber, otp } = req.body;
+  const { phoneNumber } = req.body;
 
   try {
     // check if user exist
