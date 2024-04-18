@@ -2,29 +2,22 @@ const prisma = require("../config/database");
 
 const addRecord = (newOTPRecord) => {
   const { userId, otp, createdAt, expiresAt } = newOTPRecord;
-  const query = ` INSERT INTO otp_verifications (userId, otp, createdAt, expiresAt) 
-                    VALUES (?, ?, ?, ?)`;
-  const values = [userId, otp, createdAt, expiresAt];
-
-  return pool.query(query, values);
+  return prisma.otp_verification.create({
+    data: {
+      userId,
+      otp,
+      createdAt,
+      expiresAt,
+    },
+  });
 };
 
-const getRecordById = (userId) => {
-  const query = "SELECT * FROM otp_verifications WHERE userId = ?";
-  const values = [userId];
+const getRecordById = (userId) => prisma.otp_verification.findUnique({ where: { userId } });
 
-  return pool.query(query, values);
-};
-
-const deleteRecordById = (userId) => {
-  const query = "DELETE FROM otp_verifications WHERE userId = ?";
-  const values = [userId];
-
-  return pool.query(query, values);
-};
+const deleteRecordById = (userId) => prisma.otp_verification.delete({ where: { userId } });
 
 module.exports = {
   addRecord,
   getRecordById,
-  deleteRecordById
+  deleteRecordById,
 };
