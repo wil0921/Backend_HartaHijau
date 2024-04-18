@@ -1,9 +1,11 @@
-const twilio = require("twilio");
+const { v4: uuidv4 } = require("uuid");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
+const axios = require("axios");
 const usersModel = require("../models/users.model");
 const profileModel = require("../models/profile.model");
 const OTPVerificationModel = require("../models/OTPVerification.model");
+const { generateOTP } = require("../utils");
 
 // Register controller
 const register = async (req, res) => {
@@ -11,43 +13,48 @@ const register = async (req, res) => {
 
   try {
     // check if user already register
-    const [user] = await usersModel.getUserByPhoneNumber(phoneNumber);
+    const isUserExist = await usersModel.getUserByPhoneNumber(phoneNumber);
 
     // authentication
-    if (user.length) {
-      return res.status(400).json({
-        status: false,
-        message:
-          "Nomor telepon sudah terdaftar, silahkan gunakan nomor lain atau login.",
-      });
+    if (isUserExist) {
+      if (isUserExist.verified) {
+        // If user is already verified
+        return res.status(400).json({
+          status: false,
+          message:
+            "Nomor telepon sudah terverifikasi, silahkan gunakan nomor lain atau login.",
+        });
+      } else {
+        return res.status(200).json({
+          status: true,
+          message:
+            "Nomor telepon sudah terdaftar tetapi belum terverifikasi. Silahkan melakukan verifikasi.",
+        });
+      }
     }
 
     // hashing password
     const saltRounds = 10;
-    const hashedPassword = bcrypt.hash(password, saltRounds);
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-    const newUser = {
+    const userData = {
       id: uuidv4(),
       phoneNumber,
       username,
-      hashedPassword,
+      password: hashedPassword,
       verified: false,
     };
 
     // insert new user into db
-    const result = await usersModel.createNewUser(newUser);
-
-    // sending otp into new user
-    await sendOTPVerification(result);
-
-    result.verified ? await profileModel.createUserProfile(result.id) : null;
+    const newUser = await usersModel.createNewUser(newUser);
 
     return res.status(200).json({
       status: true,
-      message: "Pengguna berhasil mendaftar. Silahkan login.",
+      message: "Pengguna berhasil mendaftar. Silahkan melakukan verifikasi.",
     });
   } catch (err) {
     console.error("Error saat menambahkan pengguna:", err);
+
     return res.status(500).json({
       status: false,
       message: "Terjadi kesalahan pada server",
@@ -56,22 +63,45 @@ const register = async (req, res) => {
   }
 };
 
-const sendOTPVerification = async ({ id, phoneNumber }, res) => {
-  // create otp
-  const otp = Math.floor(100000 + Math.random() * 900000);
-  // twilio config
-  const TWILIO_PHONE_NUMBER = process.env.TWILIO_PHONE_NUMBER;
-  const ACCOUNT_ID = process.env.ACCOUNT_ID;
-  const AUTH_TOKEN = process.env.AUTH_TOKEN;
-  const TWILIO_CLIENT = twilio(ACCOUNT_ID, AUTH_TOKEN);
+const sendOTPVerification = async (req, res) => {
+  const { phoneNumber, otp } = req.body;
 
   try {
-    // send otp using twilio
-    await TWILIO_CLIENT.messages.create({
-      body: `Kode OTP Anda: ${otp}`,
-      from: TWILIO_PHONE_NUMBER,
+    // check if user exist
+    const isUserExist = usersModel.getUserByPhoneNumber(phoneNumber);
+
+    //authentication
+    if (isUserExist) {
+      // If user is already verified
+      if (isUserExist.verified) {
+        return res.status(400).json({
+          status: false,
+          message:
+            "Nomor telepon sudah terverifikasi, silahkan gunakan nomor lain atau login.",
+        });
+      }
+    } else {
+      return res.status(200).json({
+        status: true,
+        message:
+          "Nomor telepon belum terdaftar. Silahkan register atau gunakan nomor lain",
+      });
+    }
+
+    // create otp
+    const otp = generateOTP();
+    const message = `kode otp anda adalah: ${otp}`;
+
+    // config wa gateway
+    const waGatewayApiEndPoint = "http://localhost:5001/send-message";
+    const data = {
+      session: "mysession",
       to: phoneNumber,
-    });
+      text: message,
+    };
+
+    // send http request otp using axios
+    await axios.post(waGatewayApiEndPoint, data);
 
     //hashing otp
     const saltRounds = 10;
@@ -89,10 +119,11 @@ const sendOTPVerification = async ({ id, phoneNumber }, res) => {
 
     return res.status(200).json({
       status: true,
-      message: "Kode OTP telah dikirimkan ke nomor telepon Anda",
+      message: `kode otp telah berhasil dikirim ke nomor ${phoneNumber}. Silahkan melakukan verifikasi otp`,
     });
   } catch (err) {
-    console.error("Error sending OTP:", err);
+    console.error("Error saat mengirimkan OTP:", err);
+    
     return res.status(500).json({
       status: false,
       message: "Terjadi kesalahan pada server",
@@ -124,9 +155,9 @@ const verifyOTP = async (req, res) => {
     );
 
     // validate otp verification record
-    if (OTPVerificationRecord.length <= 0) {
+    if (!OTPVerificationRecord) {
       return res.status(404).json({
-        message: "nomor tersebut sudah terverifikasi. silahkan login.",
+        message: "Pengguna sudah terverifikasi. silahkan login.",
       });
     }
 
@@ -136,6 +167,7 @@ const verifyOTP = async (req, res) => {
     if (Date.now() > expiresAt) {
       // delete expired otp verification
       await OTPVerificationModel.deleteRecordById(userId);
+      
       return res.status(401).json({
         status: false,
         message:
@@ -145,6 +177,7 @@ const verifyOTP = async (req, res) => {
 
     const hashedOTP = OTPVerificationRecord[0].otp;
     const validOTP = bcrypt.compare(otp, hashedOTP);
+    
     // validate not valid otp
     if (!validOTP) {
       return res.status(401).json({
@@ -158,6 +191,8 @@ const verifyOTP = async (req, res) => {
     await usersModel.updateUserById("verified", true, userId);
     // delete success otp verification record
     await OTPVerificationModel.deleteRecordById(userId);
+    //create user profile
+    await profileModel.createUserProfile({ userId })
 
     //generate jwt token
     const token = jwt.sign({ userId }, "secret_key", {
@@ -166,11 +201,12 @@ const verifyOTP = async (req, res) => {
 
     return res.status(200).json({
       status: true,
-      message: "nomor berhasil terverifikasi",
+      message: "Pengguna berhasil terverifikasi",
       token,
     });
   } catch (err) {
-    console.error("Error verifying OTP:", err);
+    console.error("Error verifikasi OTP:", err);
+    
     return res.status(500).json({
       status: false,
       message: "Terjadi kesalahan pada server",
@@ -272,6 +308,7 @@ const forgotPassword = async (req, res) => {
 //menggabungkan semua auth controller kedalam 1 variabel agar mudah dikelola
 const authController = {
   register,
+  sendOTPVerification,
   verifyOTP,
   login,
   secureAuth,
