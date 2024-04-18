@@ -5,8 +5,11 @@ const { authMiddleware } = require("../middleware");
 // Route register
 router.post("/register", authController.register);
 
-// Route verify user
-router.post("/verify", authController.verifyOTP);
+// Route send otp verification
+router.post('/otp/send', authController.sendOTPVerification);
+
+// Route verify otp
+router.post("/otp/verify", authController.verifyOTP);
 
 // Route login
 router.post("/login", authController.login);
