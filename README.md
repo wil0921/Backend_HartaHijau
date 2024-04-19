@@ -19,7 +19,8 @@
 ```
 {
     status: true,
-    message: "Pengguna berhasil mendaftar. Silahkan login.",
+    message: "Pengguna berhasil mendaftar. Silahkan melakukan verifikasi.",
+    newUser
 }
 ```
 
@@ -38,7 +39,7 @@
 - Response Body Success:
 
 ```
-{ 
+{
     status: true,
     message: "kode otp telah berhasil dikirim ke nomor 081234567890. Silahkan melakukan verifikasi otp"
 }
