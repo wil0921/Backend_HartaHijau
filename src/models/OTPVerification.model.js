@@ -1,12 +1,11 @@
 const prisma = require("../config/database");
 
 const addRecord = (newOTPRecord) => {
-  const { userId, otp, createdAt, expiresAt } = newOTPRecord;
+  const { userId, otp, expiresAt } = newOTPRecord;
   return prisma.otp_verification.create({
     data: {
       userId,
       otp,
-      createdAt,
       expiresAt,
     },
   });
