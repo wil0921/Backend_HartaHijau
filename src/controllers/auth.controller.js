@@ -29,6 +29,7 @@ const register = async (req, res) => {
           status: true,
           message:
             "Nomor telepon sudah terdaftar tetapi belum terverifikasi. Silahkan melakukan verifikasi.",
+          isUserExist,
         });
       }
     }
@@ -46,11 +47,12 @@ const register = async (req, res) => {
     };
 
     // insert new user into db
-    const newUser = await usersModel.createNewUser(newUser);
+    const newUser = await usersModel.createNewUser(userData);
 
     return res.status(200).json({
       status: true,
       message: "Pengguna berhasil mendaftar. Silahkan melakukan verifikasi.",
+      newUser,
     });
   } catch (err) {
     console.error("Error saat menambahkan pengguna:", err);
@@ -64,7 +66,7 @@ const register = async (req, res) => {
 };
 
 const sendOTPVerification = async (req, res) => {
-  const { phoneNumber } = req.body;
+  const { phoneNumber, userId } = req.body;
 
   try {
     // check if user exist
@@ -105,13 +107,13 @@ const sendOTPVerification = async (req, res) => {
 
     //hashing otp
     const saltRounds = 10;
-    const hashedOTP = bcrypt.hash(otp, saltRounds);
+    const hashedOTP = await bcrypt.hash(otp, saltRounds);
 
     const newOTPRecord = {
-      userId: id,
-      hashedOTP,
-      createdAt: Date.now(),
-      expiresAt: Date.now() + 3600000,
+      userId,
+      otp: hashedOTP,
+      createdAt: new Date(),
+      expiresAt: new Date(new Date().getTime() + 3600000),
     };
 
     // insert otp record into db
@@ -123,7 +125,7 @@ const sendOTPVerification = async (req, res) => {
     });
   } catch (err) {
     console.error("Error saat mengirimkan OTP:", err);
-    
+
     return res.status(500).json({
       status: false,
       message: "Terjadi kesalahan pada server",
@@ -161,13 +163,14 @@ const verifyOTP = async (req, res) => {
       });
     }
 
-    const { expiresAt } = OTPVerificationRecord[0];
+    console.log(OTPVerificationRecord);
+    const { expiresAt } = OTPVerificationRecord;
 
     // validate expired otp
     if (Date.now() > expiresAt) {
       // delete expired otp verification
       await OTPVerificationModel.deleteRecordById(userId);
-      
+
       return res.status(401).json({
         status: false,
         message:
@@ -175,9 +178,9 @@ const verifyOTP = async (req, res) => {
       });
     }
 
-    const hashedOTP = OTPVerificationRecord[0].otp;
+    const hashedOTP = OTPVerificationRecord.otp;
     const validOTP = bcrypt.compare(otp, hashedOTP);
-    
+
     // validate not valid otp
     if (!validOTP) {
       return res.status(401).json({
@@ -192,7 +195,7 @@ const verifyOTP = async (req, res) => {
     // delete success otp verification record
     await OTPVerificationModel.deleteRecordById(userId);
     //create user profile
-    await profileModel.createUserProfile({ userId })
+    await profileModel.createUserProfile(userId);
 
     //generate jwt token
     const token = jwt.sign({ userId }, "secret_key", {
@@ -206,7 +209,7 @@ const verifyOTP = async (req, res) => {
     });
   } catch (err) {
     console.error("Error verifikasi OTP:", err);
-    
+
     return res.status(500).json({
       status: false,
       message: "Terjadi kesalahan pada server",
