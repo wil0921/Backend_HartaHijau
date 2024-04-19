@@ -162,9 +162,9 @@
 # To Do List:
 
 - add redis for otp record
+- merge wa_gateway source code with backend source code
 - add time limit on qr scan feature
 - add transaction_history feature
-- remove unnecessary file
 - fix logic for creating user profile
 - add news and products tabel databases
 - add news and products models
