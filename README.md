@@ -1,6 +1,6 @@
 # Documentation for backend harta hijau app
 
-## Auth Register (under development / not tested yet)
+## Auth Register (tested)
 
 - Endpoint: `POST` `api/v1/auth/register`
 
@@ -23,7 +23,7 @@
 }
 ```
 
-## Auth sendOTPVerification (under development / not tested yet)
+## Auth sendOTPVerification (under development & tested)
 
 - Endpoint: `POST` `api/v1/auth/otp/send`
 
@@ -44,7 +44,7 @@
 }
 ```
 
-## Auth verifyOTP (under development / not tested yet)
+## Auth verifyOTP (under development & tested)
 
 - Endpoint: `POST` `api/v1/auth/otp/verify`
 
