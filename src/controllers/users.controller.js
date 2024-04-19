@@ -36,7 +36,7 @@ const createNewUser = async (req, res) => {
 
 const getAllUser = async (req, res) => {
   try {
-    const [users] = await usersModel.getAllUser();
+    const users = await usersModel.getAllUser();
 
     return res.status(200).json({
       status: true,
@@ -57,7 +57,7 @@ const deleteUserById = async (req, res) => {
   const id = req.query.id;
 
   try {
-    const [result] = await usersModel.deleteUserById(id);
+    const result = await usersModel.deleteUserById(id);
 
     return result.affectedRows
       ? res.status(200).json({
