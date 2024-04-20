@@ -321,6 +321,94 @@ const forgotPassword = async (req, res) => {
   }
 };
 
+// Reset Password Controller
+const resetPassword = async (req, res) => {
+  const { userId, otp, newPassword } = req.body;
+
+  // authentication
+  if (!userId) {
+    return res.status(401).json({
+      status: false,
+      message: "Harap cantumkan userId",
+    });
+  }
+
+  if (!otp) {
+    return res.status(401).json({
+      status: false,
+      message: "Harap cantumkan kode OTP",
+    });
+  }
+
+  if (!newPassword) {
+    return res.status(401).json({
+      status: false,
+      message: "Harap cantumkan password baru",
+    });
+  }
+
+  try {
+    const OTPVerificationRecord = await OTPVerificationModel.getRecordById(
+      userId
+    );
+
+    // validate otp verification record
+    if (!OTPVerificationRecord) {
+      return res.status(404).json({
+        status: false,
+        message: "Pengguna sudah terverifikasi. silahkan login.",
+      });
+    }
+
+    const { expiresAt } = OTPVerificationRecord;
+
+    // validate expired otp
+    if (Date.now() > expiresAt) {
+      // delete expired otp verification
+      await OTPVerificationModel.deleteRecordById(userId);
+
+      return res.status(401).json({
+        status: false,
+        message:
+          "Maaf, kode otp tersebut telah kadaluarsa. Silahkan kirim permintaan OTP lagi.",
+      });
+    }
+
+    const hashedOTP = OTPVerificationRecord.otp;
+    const validOTP = await bcrypt.compare(otp, hashedOTP);
+
+    // validate not valid otp
+    if (!validOTP) {
+      return res.status(401).json({
+        status: false,
+        message:
+          "Maaf, kode otp yang anda masukkan salah. Silahkan periksa lagi.",
+      });
+    }
+
+    // hashing password
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
+
+    // reset password that success otp verification
+    const updatedUser = await usersModel.updateUserById("password", hashedPassword, userId);
+
+    return res.status(200).json({
+      status: true,
+      message: "Password berhasil diperbarui",
+      updatedUser,
+    });
+  } catch (err) {
+    console.error("Error updating password:", err);
+
+    return res.status(500).json({
+      status: false,
+      message: "Terjadi kesalahan pada server",
+      error: err.message,
+    });
+  }
+};
+
 //menggabungkan semua auth controller kedalam 1 variabel agar mudah dikelola
 const authController = {
   register,
@@ -329,5 +417,6 @@ const authController = {
   login,
   secureAuth,
   forgotPassword,
+  resetPassword
 };
 module.exports = authController;
