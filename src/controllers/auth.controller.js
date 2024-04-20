@@ -66,23 +66,14 @@ const register = async (req, res) => {
 };
 
 const sendOTPVerification = async (req, res) => {
-  const { phoneNumber, userId } = req.body;
+  const { phoneNumber } = req.body;
 
   try {
     // check if user exist
-    const isUserExist = usersModel.getUserByPhoneNumber(phoneNumber);
+    const isUserExist = await usersModel.getUserByPhoneNumber(phoneNumber);
 
     //authentication
-    if (isUserExist) {
-      // If user is already verified
-      if (isUserExist.verified) {
-        return res.status(400).json({
-          status: false,
-          message:
-            "Nomor telepon sudah terverifikasi, silahkan gunakan nomor lain atau login.",
-        });
-      }
-    } else {
+    if (!isUserExist) {
       return res.status(200).json({
         status: true,
         message:
@@ -110,7 +101,7 @@ const sendOTPVerification = async (req, res) => {
     const hashedOTP = await bcrypt.hash(otp, saltRounds);
 
     const newOTPRecord = {
-      userId,
+      userId: isUserExist.userId,
       otp: hashedOTP,
       createdAt: new Date(),
       expiresAt: new Date(new Date().getTime() + 3600000),
