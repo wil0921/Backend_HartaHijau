@@ -135,7 +135,9 @@ const verifyOTP = async (req, res) => {
       status: false,
       message: "Harap cantumkan userId",
     });
-  } else if (!otp) {
+  }
+
+  if (!otp) {
     return res.status(401).json({
       status: false,
       message: "Kode OTP tidak boleh kosong",
@@ -338,7 +340,11 @@ const resetPassword = async (req, res) => {
     const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
 
     // reset password that success otp verification
-    const updatedUser = await usersModel.updateUserById("password", hashedPassword, userId);
+    const updatedUser = await usersModel.updateUserById(
+      "password",
+      hashedPassword,
+      userId
+    );
 
     return res.status(200).json({
       status: true,
@@ -363,6 +369,6 @@ const authController = {
   verifyOTP,
   login,
   secureAuth,
-  resetPassword
+  resetPassword,
 };
 module.exports = authController;
