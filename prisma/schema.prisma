@@ -25,7 +25,7 @@ model Profile {
   profile_picture String?
   email           String?
   createdAt       DateTime @default(now())
-  user            User     @relation(fields: [userId], references: [id])
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   userId          String   @unique
 }
 
@@ -34,14 +34,14 @@ model Otp_verification {
   otp       String
   createdAt DateTime @default(now())
   expiresAt DateTime
-  user      User     @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   userId    String   @unique
 }
 
 model Poin {
   id      Int     @id @default(autoincrement())
   balance Int
-  user    User    @relation(fields: [userId], references: [id])
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   userId  String  @unique
 }
 
@@ -56,8 +56,8 @@ model Transaction_history {
   updatedAt     DateTime @updatedAt
   
   // Relationships
-  sender        User    @relation("Sender", fields: [senderId], references: [id])
-  recipient     User    @relation("Recipient", fields: [recipientId], references: [id])
+  sender        User    @relation("Sender", fields: [senderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  recipient     User    @relation("Recipient", fields: [recipientId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   
   // Indexes
   @@index([transactionId], name: "transactionId_index")
