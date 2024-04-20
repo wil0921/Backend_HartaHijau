@@ -268,59 +268,6 @@ const secureAuth = (req, res) => {
   res.json({ message: "Akses diizinkan" });
 };
 
-// Forgot Password Controller
-const forgotPassword = async (req, res) => {
-  const { phoneNumber, password } = req.body;
-  // Validasi input phoneNumber
-  if (!phoneNumber) {
-    return res.status(400).json({
-      status: false,
-      message: "Nomor telepon diperlukan.",
-    });
-  }
-
-  try {
-    // check if user exist
-    const user = await usersModel.getUserByPhoneNumber(phoneNumber);
-
-    // if user doesn't exist
-    if (!user) {
-      return res.status(404).json({
-        status: false,
-        message: "Nomor telepon tidak terdaftar / salah.",
-      });
-    }
-
-    // Validasi input password
-    if (!password || user.password == password) {
-      return res.status(400).json({
-        status: false,
-        message: "Kata sandi baru diperlukan.",
-      });
-    }
-
-    // update user password
-    const updatedUser = await usersModel.updateUserById(
-      "password",
-      password,
-      user.id
-    );
-
-    return res.status(200).json({
-      status: true,
-      message: "Password berhasil diperbarui",
-      updatedUser,
-    });
-  } catch (err) {
-    console.error("Error updating password:", err);
-    return res.status(500).json({
-      status: false,
-      message: "Terjadi kesalahan pada server",
-      error: err.message,
-    });
-  }
-};
-
 // Reset Password Controller
 const resetPassword = async (req, res) => {
   const { userId, otp, newPassword } = req.body;
@@ -416,7 +363,6 @@ const authController = {
   verifyOTP,
   login,
   secureAuth,
-  forgotPassword,
   resetPassword
 };
 module.exports = authController;
