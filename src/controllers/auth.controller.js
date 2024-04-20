@@ -224,11 +224,32 @@ const login = async (req, res) => {
   try {
     // search user by phone number
     const user = await usersModel.getUserByPhoneNumber(phoneNumber);
+
+    // decrpt hashed password & compare it
+    const hashedPassword = user.password;
+    const validPassword = bcrypt.compare(password, hashedPassword);
+
     // authentication
-    if (!user || user.password !== password) {
-      return res
-        .status(401)
-        .json({ status: false, message: "Nomor telepon atau password salah" });
+    if (!user) {
+      return res.status(401).json({
+        status: false,
+        message: "Nomor telepon salah, silahkan coba lagi dengan nomor lain",
+      });
+    }
+
+    if (!validPassword) {
+      return res.status(401).json({
+        status: false,
+        message: "password salah, silahkan coba lagi dengan password lain.",
+      });
+    }
+
+    if (!user.verified) {
+      return res.status(401).json({
+        status: false,
+        message:
+          "Pengguna belum melakukan verifikasi, silahkan melakukan verifikasi terlebih dahulu.",
+      });
     }
 
     //generate jwt token
@@ -242,6 +263,7 @@ const login = async (req, res) => {
       .json({ status: true, message: "Berhasil login", token });
   } catch (err) {
     console.error("Error login:", err);
+
     return res.status(500).json({
       status: false,
       message: "Terjadi kesalahan pada server",
