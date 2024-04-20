@@ -57,19 +57,24 @@ const deleteUserById = async (req, res) => {
   const id = req.query.id;
 
   try {
-    const result = await usersModel.deleteUserById(id);
+    const result = await usersModel.getUserById(id);
+    
+    if(!result){
+      return res.status(404).json({
+        status: false,
+        message: `Gagal menghapus, Pengguna dengan ID ${id} tidak ditemukan.`
+      })
+    }
 
-    return result.affectedRows
-      ? res.status(200).json({
-          status: true,
-          message: `Pengguna dengan ID ${id} berhasil dihapus`,
-        })
-      : res.status(404).json({
-          status: false,
-          message: `Pengguna dengan ID ${id} tidak ditemukan`,
-        });
+    await usersModel.deleteUserById(id);
+
+    return res.status(200).json({
+      status: true,
+      message: `Pengguna dengan ID ${id} berhasil dihapus`,
+    });
   } catch (err) {
     console.error("Error saat menghapus user:", err);
+
     res.status(500).json({
       status: false,
       message: "Terjadi kesalahan saat menghapus user",
