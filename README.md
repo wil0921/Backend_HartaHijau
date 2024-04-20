@@ -68,7 +68,7 @@
 }
 ```
 
-## Auth Login (under development / not tested yet)
+## Auth Login (under development / tested)
 
 - Endpoint: `GET` `api/v1/auth/login`
 
