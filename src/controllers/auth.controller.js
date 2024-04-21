@@ -5,7 +5,7 @@ const axios = require("axios");
 const usersModel = require("../models/users.model");
 const profileModel = require("../models/profile.model");
 const OTPVerificationModel = require("../models/OTPVerification.model");
-const { generateOTP } = require("../utils");
+const { generateOTP, hashData } = require("../utils");
 
 // Register controller
 const register = async (req, res) => {
@@ -13,11 +13,11 @@ const register = async (req, res) => {
 
   try {
     // check if user already register
-    const isUserExist = await usersModel.getUserByPhoneNumber(phoneNumber);
+    const existingUser = await usersModel.getUserByPhoneNumber(phoneNumber);
 
     // authentication
-    if (isUserExist) {
-      if (isUserExist.verified) {
+    if (existingUser) {
+      if (existingUser.verified) {
         // If user is already verified
         return res.status(400).json({
           status: false,
@@ -29,14 +29,13 @@ const register = async (req, res) => {
           status: true,
           message:
             "Nomor telepon sudah terdaftar tetapi belum terverifikasi. Silahkan melakukan verifikasi.",
-          isUserExist,
+          existingUser,
         });
       }
     }
 
     // hashing password
-    const saltRounds = 10;
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
+    const hashedPassword = await hashData(password);
 
     const userData = {
       id: uuidv4(),
@@ -70,10 +69,10 @@ const sendOTPVerification = async (req, res) => {
 
   try {
     // check if user exist
-    const isUserExist = await usersModel.getUserByPhoneNumber(phoneNumber);
+    const existingUser = await usersModel.getUserByPhoneNumber(phoneNumber);
 
     //authentication
-    if (!isUserExist) {
+    if (!existingUser) {
       return res.status(200).json({
         status: true,
         message:
@@ -97,11 +96,10 @@ const sendOTPVerification = async (req, res) => {
     await axios.post(waGatewayApiEndPoint, data);
 
     //hashing otp
-    const saltRounds = 10;
-    const hashedOTP = await bcrypt.hash(otp, saltRounds);
+    const hashedOTP = await hash(otp);
 
     const newOTPRecord = {
-      userId: isUserExist.userId,
+      userId: existingUser.userId,
       otp: hashedOTP,
       createdAt: new Date(),
       expiresAt: new Date(new Date().getTime() + 3600000),
@@ -336,8 +334,7 @@ const resetPassword = async (req, res) => {
     }
 
     // hashing password
-    const saltRounds = 10;
-    const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
+    const hashedPassword = await hashData(newPassword);
 
     // reset password that success otp verification
     const updatedUser = await usersModel.updateUserById(
