@@ -3,12 +3,15 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 const routes = require("../src/routes/");
 const { serverMiddleware } = require("../src/middleware");
+const cookieParser = require("cookie-parser");
 
 const app = express();
 
 // Middleware
 app.use(bodyParser.json());
 app.use(cors());
+app.use(express.urlencoded({ extended: false }));
+app.use(cookieParser());
 app.use(serverMiddleware.logRequestTime);
 app.use(serverMiddleware.maintenanceMode);
 
