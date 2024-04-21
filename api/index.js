@@ -1,6 +1,6 @@
 const express = require("express");
 const bodyParser = require("body-parser");
-const cors = require('cors')
+const cors = require("cors");
 const routes = require("../src/routes/");
 const { serverMiddleware } = require("../src/middleware");
 
@@ -17,7 +17,7 @@ app.get("/", (req, res) => {
 });
 
 // Routes
-app.use(routes);
+app.use("/api/v1", routes);
 
 // jika user mengakses url yang tidak ada maka server akan mengirimkan respon berikut
 app.use("*", (req, res) => {
