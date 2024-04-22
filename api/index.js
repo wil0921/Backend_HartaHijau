@@ -3,7 +3,7 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const routes = require("../src/routes/");
-const { serverMiddleware } = require("../src/middleware");
+const { serverMiddleware, errorMiddleware } = require("../src/middleware");
 const whatsappApi = require("../whatsapp-api/");
 
 const app = express();
@@ -15,6 +15,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(serverMiddleware.logRequestTime);
 app.use(serverMiddleware.maintenanceMode);
+app.use(errorMiddleware.handleError);
 
 app.get("/", (req, res) => {
   res.status(200).send("Selamat datang di server Node.js!");
