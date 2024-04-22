@@ -1,13 +1,13 @@
 const bcrypt = require("bcrypt");
 const { v4: uuidv4 } = require("uuid"); // to generate unique random id
 const usersModel = require("../models/users.model");
+const { hashData } = require("../utils");
 
 const createNewUser = async (req, res) => {
   const { phoneNumber, username, password } = req.body;
 
   // hashing password
-  const saltRounds = 10;
-  const hashedPassword = bcrypt.hash(password, saltRounds);
+  const hashedPassword = hashData(password);
 
   try {
     const newUser = {
@@ -58,12 +58,12 @@ const deleteUserById = async (req, res) => {
 
   try {
     const result = await usersModel.getUserById(id);
-    
-    if(!result){
+
+    if (!result) {
       return res.status(404).json({
         status: false,
-        message: `Gagal menghapus, Pengguna dengan ID ${id} tidak ditemukan.`
-      })
+        message: `Gagal menghapus, Pengguna dengan ID ${id} tidak ditemukan.`,
+      });
     }
 
     await usersModel.deleteUserById(id);
