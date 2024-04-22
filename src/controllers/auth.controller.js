@@ -5,10 +5,10 @@ const axios = require("axios");
 const usersModel = require("../models/users.model");
 const profileModel = require("../models/profile.model");
 const OTPVerificationModel = require("../models/OTPVerification.model");
-const { generateOTP, hashData } = require("../utils");
+const { generateOTP, hashData, CustomError } = require("../utils");
 
 // Register controller
-const register = async (req, res) => {
+const register = async (req, res, next) => {
   const { phoneNumber, username, password } = req.body;
 
   try {
@@ -19,11 +19,9 @@ const register = async (req, res) => {
     if (existingUser) {
       if (existingUser.verified) {
         // If user is already verified
-        return res.status(400).json({
-          status: false,
-          message:
-            "Nomor telepon sudah terverifikasi, silahkan gunakan nomor lain atau login.",
-        });
+        throw new CustomError.ClientError(
+          "Nomor telepon sudah terverifikasi, silahkan gunakan nomor lain atau login."
+        ).setStatusCode(400);
       } else {
         return res.status(200).json({
           status: true,
@@ -55,16 +53,11 @@ const register = async (req, res) => {
     });
   } catch (err) {
     console.error("Error saat menambahkan pengguna:", err);
-
-    return res.status(500).json({
-      status: false,
-      message: "Terjadi kesalahan pada server",
-      error: err.message,
-    });
+    next(err);
   }
 };
 
-const sendOTPVerification = async (req, res) => {
+const sendOTPVerification = async (req, res, next) => {
   const { phoneNumber } = req.body;
 
   try {
@@ -73,11 +66,9 @@ const sendOTPVerification = async (req, res) => {
 
     //authentication
     if (!existingUser) {
-      return res.status(200).json({
-        status: true,
-        message:
-          "Nomor telepon belum terdaftar. Silahkan register atau gunakan nomor lain",
-      });
+      throw new CustomError.ClientError(
+        "Nomor telepon belum terdaftar. Silahkan register atau gunakan nomor lain"
+      ).setStatusCode(404);
     }
 
     // create otp
@@ -114,32 +105,25 @@ const sendOTPVerification = async (req, res) => {
     });
   } catch (err) {
     console.error("Error saat mengirimkan OTP:", err);
-
-    return res.status(500).json({
-      status: false,
-      message: "Terjadi kesalahan pada server",
-      error: err.message,
-    });
+    next(err);
   }
 };
 
 // Verify User controller
-const verifyOTP = async (req, res) => {
+const verifyOTP = async (req, res, next) => {
   const { userId, otp } = req.body;
 
   // authentication
   if (!userId) {
-    return res.status(401).json({
-      status: false,
-      message: "Harap cantumkan userId",
-    });
+    throw new CustomError.ClientError("Harap cantumkan userId.").setStatusCode(
+      401
+    );
   }
 
   if (!otp) {
-    return res.status(401).json({
-      status: false,
-      message: "Kode OTP tidak boleh kosong",
-    });
+    throw new CustomError.ClientError(
+      "Harap cantumkan kode OTP."
+    ).setStatusCode(401);
   }
 
   try {
@@ -149,12 +133,11 @@ const verifyOTP = async (req, res) => {
 
     // validate otp verification record
     if (!OTPVerificationRecord) {
-      return res.status(404).json({
-        message: "Pengguna sudah terverifikasi. silahkan login.",
-      });
+      throw new CustomError.ClientError(
+        "Pengguna sudah terverifikasi. Silahkan login."
+      ).setStatusCode(404);
     }
 
-    console.log(OTPVerificationRecord);
     const { expiresAt } = OTPVerificationRecord;
 
     // validate expired otp
@@ -162,11 +145,9 @@ const verifyOTP = async (req, res) => {
       // delete expired otp verification
       await OTPVerificationModel.deleteRecordById(userId);
 
-      return res.status(401).json({
-        status: false,
-        message:
-          "Maaf, kode otp tersebut telah kadaluarsa. Silahkan kirim permintaan OTP lagi.",
-      });
+      throw new CustomError.ClientError(
+        "Maaf, kode otp tersebut telah kadaluarsa. Silahkan kirim permintaan OTP lagi."
+      ).setStatusCode(401);
     }
 
     const hashedOTP = OTPVerificationRecord.otp;
@@ -174,11 +155,9 @@ const verifyOTP = async (req, res) => {
 
     // validate not valid otp
     if (!validOTP) {
-      return res.status(401).json({
-        status: false,
-        message:
-          "Maaf, kode otp yang anda masukkan salah. Silahkan periksa lagi.",
-      });
+      throw new CustomError.ClientError(
+        "Maaf, kode OTP yang anda masukkan salah. Silahkan periksa lagi."
+      ).setStatusCode(404);
     }
 
     // verified user that success otp verification
@@ -200,17 +179,12 @@ const verifyOTP = async (req, res) => {
     });
   } catch (err) {
     console.error("Error verifikasi OTP:", err);
-
-    return res.status(500).json({
-      status: false,
-      message: "Terjadi kesalahan pada server",
-      error: err.message,
-    });
+    next(err);
   }
 };
 
 // Login controller
-const login = async (req, res) => {
+const login = async (req, res, next) => {
   const { phoneNumber, password } = req.body;
   try {
     // search user by phone number
@@ -222,25 +196,21 @@ const login = async (req, res) => {
 
     // authentication
     if (!user) {
-      return res.status(401).json({
-        status: false,
-        message: "Nomor telepon salah, silahkan coba lagi dengan nomor lain",
-      });
+      throw new CustomError.ClientError(
+        "Nomor telepon salah, silahkan coba lagi dengan nomor lain"
+      ).setStatusCode(404);
     }
 
     if (!validPassword) {
-      return res.status(401).json({
-        status: false,
-        message: "password salah, silahkan coba lagi dengan password lain.",
-      });
+      throw new CustomError.ClientError(
+        "password salah, silahkan coba lagi dengan password lain."
+      ).setStatusCode(404);
     }
 
     if (!user.verified) {
-      return res.status(401).json({
-        status: false,
-        message:
-          "Pengguna belum melakukan verifikasi, silahkan melakukan verifikasi terlebih dahulu.",
-      });
+      throw new Error(
+        "Pengguna belum melakukan verifikasi, silahkan melakukan verifikasi terlebih dahulu."
+      ).setStatusCode(401);
     }
 
     //generate jwt token
@@ -254,17 +224,12 @@ const login = async (req, res) => {
       .json({ status: true, message: "Berhasil login", token });
   } catch (err) {
     console.error("Error login:", err);
-
-    return res.status(500).json({
-      status: false,
-      message: "Terjadi kesalahan pada server",
-      error: err.message,
-    });
+    next(err);
   }
 };
 
 // Secure User controller
-const secureAuth = (req, res) => {
+const secureAuth = (req, res, next) => {
   res.json({ message: "Akses diizinkan" });
 };
 
@@ -274,24 +239,21 @@ const resetPassword = async (req, res) => {
 
   // authentication
   if (!userId) {
-    return res.status(401).json({
-      status: false,
-      message: "Harap cantumkan userId",
-    });
+    throw new CustomError.ClientError("Harap cantumkan userId.").setStatusCode(
+      401
+    );
   }
 
   if (!otp) {
-    return res.status(401).json({
-      status: false,
-      message: "Harap cantumkan kode OTP",
-    });
+    throw new CustomError.ClientError(
+      "Harap cantumkan kode OTP."
+    ).setStatusCode(401);
   }
 
   if (!newPassword) {
-    return res.status(401).json({
-      status: false,
-      message: "Harap cantumkan password baru",
-    });
+    throw new CustomError.ClientError(
+      "Harap cantumkan password baru."
+    ).setStatusCode(401);
   }
 
   try {
@@ -301,10 +263,9 @@ const resetPassword = async (req, res) => {
 
     // validate otp verification record
     if (!OTPVerificationRecord) {
-      return res.status(404).json({
-        status: false,
-        message: "Pengguna sudah terverifikasi. silahkan login.",
-      });
+      throw new CustomError.ClientError(
+        "Pengguna sudah terverifikasi. Silahkan login."
+      ).setStatusCode(404);
     }
 
     const { expiresAt } = OTPVerificationRecord;
@@ -314,11 +275,9 @@ const resetPassword = async (req, res) => {
       // delete expired otp verification
       await OTPVerificationModel.deleteRecordById(userId);
 
-      return res.status(401).json({
-        status: false,
-        message:
-          "Maaf, kode otp tersebut telah kadaluarsa. Silahkan kirim permintaan OTP lagi.",
-      });
+      throw new CustomError.ClientError(
+        "Maaf kode OTP tersebut sudah kadaluarsa. Silahkan melakukan permintaan OTP lagi."
+      ).setStatusCode(401);
     }
 
     const hashedOTP = OTPVerificationRecord.otp;
@@ -326,11 +285,9 @@ const resetPassword = async (req, res) => {
 
     // validate not valid otp
     if (!validOTP) {
-      return res.status(401).json({
-        status: false,
-        message:
-          "Maaf, kode otp yang anda masukkan salah. Silahkan periksa lagi.",
-      });
+      throw new CustomError.ClientError(
+        "Maaf kode OTP yang anda masukkan salah. Silahkan periksa lagi."
+      ).setStatusCode(401);
     }
 
     // hashing password
@@ -350,12 +307,7 @@ const resetPassword = async (req, res) => {
     });
   } catch (err) {
     console.error("Error updating password:", err);
-
-    return res.status(500).json({
-      status: false,
-      message: "Terjadi kesalahan pada server",
-      error: err.message,
-    });
+    next(err);
   }
 };
 
