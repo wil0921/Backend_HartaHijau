@@ -1,10 +1,15 @@
-const bcrypt = require("bcrypt");
 const { v4: uuidv4 } = require("uuid"); // to generate unique random id
 const usersModel = require("../models/users.model");
-const { hashData } = require("../utils");
+const { hashData, CustomError } = require("../utils");
 
 const createNewUser = async (req, res) => {
   const { phoneNumber, username, password } = req.body;
+
+  if (!phoneNumber || !username || !password) {
+    throw new CustomError.ClientError(
+      "Masih ada data yang kosong, harap cantumkan data dengan lengkap."
+    ).setStatusCode(403);
+  }
 
   // hashing password
   const hashedPassword = hashData(password);
@@ -26,17 +31,19 @@ const createNewUser = async (req, res) => {
     });
   } catch (err) {
     console.error("Error saat menambahkan pengguna:", err);
-    return res.status(500).json({
-      status: false,
-      message: "Terjadi kesalahan pada server",
-      error: err.message,
-    });
+    next(err);
   }
 };
 
 const getAllUser = async (req, res) => {
   try {
     const users = await usersModel.getAllUser();
+
+    if (!users.length) {
+      throw new CustomError.ClientError(
+        "Belum ada data pengguna untuk ditampilkan."
+      ).setStatusCode(404);
+    }
 
     return res.status(200).json({
       status: true,
@@ -45,25 +52,26 @@ const getAllUser = async (req, res) => {
     });
   } catch (err) {
     console.error("Error saat mengambil semua pengguna:", err);
-    return res.status(500).json({
-      status: false,
-      message: "Terjadi kesalahan pada server",
-      error: err.message,
-    });
+    next(err);
   }
 };
 
 const deleteUserById = async (req, res) => {
   const id = req.query.id;
 
+  if (!id) {
+    throw new CustomError.ClientError(
+      "Harap cantumkan id pengguna"
+    ).setStatusCode(401);
+  }
+
   try {
     const result = await usersModel.getUserById(id);
 
     if (!result) {
-      return res.status(404).json({
-        status: false,
-        message: `Gagal menghapus, Pengguna dengan ID ${id} tidak ditemukan.`,
-      });
+      throw new CustomError.ClientError(
+        `Gagal menghapus, Pengguna dengan ID ${id} tidak ditemukan.`
+      ).setStatusCode(404);
     }
 
     await usersModel.deleteUserById(id);
@@ -74,12 +82,7 @@ const deleteUserById = async (req, res) => {
     });
   } catch (err) {
     console.error("Error saat menghapus user:", err);
-
-    res.status(500).json({
-      status: false,
-      message: "Terjadi kesalahan saat menghapus user",
-      error: err.message,
-    });
+    next(err);
   }
 };
 
