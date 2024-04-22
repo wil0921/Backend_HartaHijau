@@ -1,7 +1,7 @@
 const responseError = (err, req, res, next) => {
-  const statusCode = err.statusCode || 500;
-  const status = err.status || false;
-  const message = err.message || "Terjadi kesalahan pada server";
+  const statusCode = err.statusCode;
+  const status = err.status;
+  const message = err.message;
 
   res.status(statusCode).json({
     status,
