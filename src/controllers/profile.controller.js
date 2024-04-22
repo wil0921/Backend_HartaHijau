@@ -1,6 +1,6 @@
 const profileModel = require("../models/profile.model");
 
-const createUserProfile = async (req, res) => {
+const createUserProfile = async (req, res, next) => {
   const { id } = req.query.id;
   try {
     const result = await profileModel.createUserProfile(id);
@@ -12,15 +12,11 @@ const createUserProfile = async (req, res) => {
     });
   } catch (err) {
     console.error("Error saat membuat profile:", err);
-    return res.status(500).json({
-      status: false,
-      message: "Terjadi kesalahan pada server",
-      error: err.message,
-    });
+    next(err);
   }
 };
 
-const getUserProfileById = async (req, res) => {
+const getUserProfileById = async (req, res, next) => {
   const id = req.query.id;
 
   try {
@@ -33,15 +29,11 @@ const getUserProfileById = async (req, res) => {
     });
   } catch (err) {
     console.error("Error saat mengambil data profile:", err);
-    return res.status(500).json({
-      status: false,
-      message: "Terjadi kesalahan pada server",
-      error: err.message,
-    });
+    next(err)
   }
 };
 
-const getDetailUserProfileById = async (req, res) => {
+const getDetailUserProfileById = async (req, res, next) => {
   const id = req.query.id;
 
   try {
@@ -54,15 +46,11 @@ const getDetailUserProfileById = async (req, res) => {
     });
   } catch (err) {
     console.error("Error saat mengambil detail profile:", err);
-    return res.status(500).json({
-      status: false,
-      message: "Terjadi kesalahan pada server",
-      error: err.message,
-    });
+    next(err)
   }
 };
 
-const updateUserProfileById = async (req, res) => {
+const updateUserProfileById = async (req, res, next) => {
   const id = req.query.id;
   const { profilePicture, username, phoneNumber, email, password } = req.body;
   const fields = { profilePicture, username, phoneNumber, email, password };
@@ -77,11 +65,7 @@ const updateUserProfileById = async (req, res) => {
     });
   } catch (err) {
     console.error("Error saat mengambil semua pengguna:", err);
-    return res.status(500).json({
-      status: false,
-      message: "Terjadi kesalahan pada server",
-      error: err.message,
-    });
+    next(err)
   }
 };
 
