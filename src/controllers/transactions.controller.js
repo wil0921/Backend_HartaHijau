@@ -1,9 +1,9 @@
 const qr = require("qrcode");
 const uploadImageToCloudinary = require("../utils/cloudinary");
-const pool = require("../config/database");
 const transactionsModel = require("../models/transactions.model");
+const { CustomError } = require("../utils");
 
-const transferBalance = async (req, res) => {
+const transferBalance = async (req, res, next) => {
   const { sender, receiver, amount } = req.body;
 
   // if sender poin is not enought
@@ -23,25 +23,18 @@ const transferBalance = async (req, res) => {
     });
   } catch (err) {
     console.error("Error sending poin poin:", err);
-
-    return res.status(500).json({
-      status: false,
-      message: "Terjadi kesalahan pada server",
-      error: err.message,
-    });
+    next(err);
   }
 };
 
-const generateQRCode = async (req, res) => {
+const generateQRCode = async (req, res, next) => {
   const { phoneNumber, username } = req.body;
 
   // Verifikasi data user
   if (!phoneNumber || !username) {
-    return res.status(400).json({
-      status: false,
-      message:
-        "Kesalahan: Data pengguna tidak lengkap. Pastikan Anda menyediakan nomor telepon dan username.",
-    });
+    throw new CustomError.ClientError(
+      "Data pengguna tidak lengkap. Pastikan Anda menyediakan nomor telepon dan username."
+    );
   }
 
   try {
@@ -61,12 +54,7 @@ const generateQRCode = async (req, res) => {
     });
   } catch (err) {
     console.error("Error:", err);
-
-    return res.status(500).json({
-      status: false,
-      message: "Terjadi kesalahan saat membuat kode QR",
-      error: err.message,
-    });
+    next(err);
   }
 };
 
