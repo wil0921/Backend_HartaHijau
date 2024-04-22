@@ -15,7 +15,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(serverMiddleware.logRequestTime);
 app.use(serverMiddleware.maintenanceMode);
-app.use(errorMiddleware.handleError);
+app.use(errorMiddleware.responseError);
 
 app.get("/", (req, res) => {
   res.status(200).send("Selamat datang di server Node.js!");
