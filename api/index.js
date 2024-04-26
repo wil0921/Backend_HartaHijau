@@ -1,4 +1,5 @@
 const express = require("express");
+const path = require("path");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
@@ -13,6 +14,8 @@ app.use(bodyParser.json());
 app.use(cors());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
+app.set("view engine", "ejs");
+app.set("views",  path.join(__dirname, "../whatsapp-api/app/views"));
 app.use(serverMiddleware.logRequestTime);
 app.use(serverMiddleware.maintenanceMode);
 app.use(errorMiddleware.responseError);
@@ -24,9 +27,6 @@ app.get("/", (req, res) => {
 // Routes
 app.use("/api/v1", routes);
 app.use("/wa/api/v1", whatsappApi.MainRouter);
-
-// inisialisasi whatsapp server
-whatsappApi.init();
 
 // jika user mengakses url yang tidak ada maka server akan mengirimkan respon berikut
 app.use("*", (req, res) => {
