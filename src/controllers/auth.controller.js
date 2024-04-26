@@ -76,7 +76,7 @@ const sendOTPVerification = async (req, res, next) => {
     const message = `kode otp anda adalah: ${otp}`;
 
     // config wa gateway
-    const waGatewayApiEndPoint = "http://localhost:5001/send-message";
+    const waGatewayApiEndPoint = "http://localhost:88/wa/api/v1/send-message";
     const data = {
       session: "mysession",
       to: phoneNumber,
@@ -87,10 +87,10 @@ const sendOTPVerification = async (req, res, next) => {
     await axios.post(waGatewayApiEndPoint, data);
 
     //hashing otp
-    const hashedOTP = await hash(otp);
+    const hashedOTP = await hashData(otp);
 
     const newOTPRecord = {
-      userId: existingUser.userId,
+      userId: existingUser.id,
       otp: hashedOTP,
       createdAt: new Date(),
       expiresAt: new Date(new Date().getTime() + 3600000),
