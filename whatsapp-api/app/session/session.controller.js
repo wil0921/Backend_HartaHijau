@@ -1,7 +1,9 @@
 const whatsapp = require("wa-multi-session");
+const { toDataURL } = require("qrcode");
 
 const createSession = async (req, res, next) => {
   try {
+    console.log('whatsapp object: ' + whatsapp)
     const scan = req.query.scan;
     const sessionName =
       req.body.session || req.query.session || req.headers.session;
@@ -19,16 +21,15 @@ const createSession = async (req, res, next) => {
         // 3). ENSURE THAT CLIENT ON SCAN MODE AND SESSION NAME IS CORRECT
         if (scan && data.sessionId == sessionName) {
           // 4). SEND QR CODE AS RESPONSE
-          res.render("Scan ini untuk terhubung whatsapp: ", { qr: qr });
+          res.render("scan", { qr: qr });
         } else {
           // 3). RESPONSE IF NOT IN SCAN MODE
           res.status(200).json({ qr });
         }
       }
-
-      // START WHATSAPP SESSION
-      await whatsapp.startSession(sessionName, { printQR: true });
     });
+    // START WHATSAPP SESSION
+    await whatsapp.startSession(sessionName, { printQR: true });
   } catch (error) {
     next(error);
   }
