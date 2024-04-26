@@ -12,26 +12,24 @@ MainRouter.get("/", (req, res) => {
 MainRouter.use(SessionRouter);
 MainRouter.use(MessageRouter);
 
-const init = () => {
-  // KETIKA SESI BERHASIL TERKONEKSI
-  whatsapp.onConnected((session) => {
-    console.log("connected => ", session);
-  });
+// KETIKA SESI BERHASIL TERKONEKSI
+whatsapp.onConnected((session) => {
+  console.log("connected => ", session);
+});
 
-  // KETIKA SESI MENUTUP KONEKSI
-  whatsapp.onDisconnected((session) => {
-    console.log("disconnected => ", session);
-  });
+// KETIKA SESI MENUTUP KONEKSI
+whatsapp.onDisconnected((session) => {
+  console.log("disconnected => ", session);
+});
 
-  // KETIKA SESI SEDANG MENGKONEKSI
-  whatsapp.onConnecting((session) => {
-    console.log("connecting => ", session);
-  });
+// KETIKA SESI SEDANG MENGKONEKSI
+whatsapp.onConnecting((session) => {
+  console.log("connecting => ", session);
+});
 
-  // MENGAMBIL DATA SESI DARI PENYIMPANAN
-  whatsapp.loadSessionsFromStorage();
-};
+// MENGAMBIL DATA SESI DARI PENYIMPANAN
+whatsapp.loadSessionsFromStorage();
 
-const whatsappApi = { MainRouter, init };
+const whatsappApi = { MainRouter };
 
 module.exports = whatsappApi;
