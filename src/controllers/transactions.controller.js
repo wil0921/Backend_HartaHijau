@@ -1,12 +1,13 @@
 const qr = require("qrcode");
 const uploadImageToCloudinary = require("../utils/cloudinary");
 const transactionsModel = require("../models/transactions.model");
+const historyModel = require("../models/history");
 const { CustomError } = require("../utils");
 
 const transferBalance = async (req, res, next) => {
   const { sender, receiver, amount } = req.body;
 
-  // if sender poin is not enought
+  // if sender poin is not enough
   if (sender.poin < amount) {
     return res.status(400).json({
       status: false,
@@ -15,7 +16,8 @@ const transferBalance = async (req, res, next) => {
   }
 
   try {
-    await transactionsModel.transferBalance(sender, receiver, amount);
+    const transactionHistory = await transactionsModel.transferBalance(sender, receiver, amount);
+    await historyModel.createHistory(transactionHistory.transactionId, sender, receiver, amount, "send");
 
     return res.status(200).json({
       status: true,
