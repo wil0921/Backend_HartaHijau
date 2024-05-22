@@ -1,7 +1,7 @@
 const qr = require("qrcode");
 const uploadImageToCloudinary = require("../utils/cloudinary");
 const transactionsModel = require("../models/transactions.model");
-const historyModel = require("../models/history");
+const historyModel = require("../models/history.model");
 const { CustomError } = require("../utils");
 
 const transferBalance = async (req, res, next) => {
@@ -16,8 +16,18 @@ const transferBalance = async (req, res, next) => {
   }
 
   try {
-    const transactionHistory = await transactionsModel.transferBalance(sender, receiver, amount);
-    await historyModel.createHistory(transactionHistory.transactionId, sender, receiver, amount, "send");
+    const transactionHistory = await transactionsModel.transferBalance(
+      sender,
+      receiver,
+      amount
+    );
+    await historyModel.createHistory(
+      transactionHistory.transactionId,
+      sender,
+      receiver,
+      amount,
+      "send"
+    );
 
     return res.status(200).json({
       status: true,
