@@ -12,6 +12,16 @@ const register = async (req, res, next) => {
   const { phoneNumber, username, password } = req.body;
 
   try {
+
+    // check req body 
+    if ( !phoneNumber || !username || !password ) {
+      return res.status(400).json({
+        status: false,
+        message:
+          "Tidak sesuai dengan ketentuan register kami!",
+      });
+    }
+
     // check if user already register
     const existingUser = await usersModel.getUserByPhoneNumber(phoneNumber);
 
@@ -186,9 +196,35 @@ const verifyOTP = async (req, res, next) => {
 // Login controller
 const login = async (req, res, next) => {
   const { phoneNumber, password } = req.body;
+
+  let data = {};
   try {
+
+    console.log('phoneNumber', phoneNumber);
+    console.log('password', password);
+    if ( !phoneNumber  || !password ) {
+      return res.status(400).json({
+        status: false,
+        message:
+          "Tidak sesuai dengan ketentuan kami!",
+      });
+    }
+
     // search user by phone number
     const user = await usersModel.getUserByPhoneNumber(phoneNumber);
+    // check user ada atau tidak
+    if ( !user ) {
+      console.log('user', user) ;
+      return res.status(404).json({
+        status: false,
+        message:
+          "Nomor telepon tidak ditemukan",
+      });
+    }
+
+    // isi object data dengan user
+    data.username = user.username;
+    data.phone_number = user.phone_number;
 
     // decrpt hashed password & compare it
     const hashedPassword = user.password;
@@ -208,9 +244,14 @@ const login = async (req, res, next) => {
     }
 
     if (!user.verified) {
-      throw new Error(
-        "Pengguna belum melakukan verifikasi, silahkan melakukan verifikasi terlebih dahulu."
-      ).setStatusCode(401);
+      // throw new Error(
+      //   "Pengguna belum melakukan verifikasi, silahkan melakukan verifikasi terlebih dahulu."
+      // ).setStatusCode(401);
+      return res.status(400).json({
+        status: false,
+        message:
+          "Pengguna belum melakukan verifikasi, silahkan melakukan verifikasi terlebih dahulu.",
+      });
     }
 
     //generate jwt token
@@ -221,7 +262,7 @@ const login = async (req, res, next) => {
     //login success
     return res
       .status(200)
-      .json({ status: true, message: "Berhasil login", token });
+      .json({ status: true, message: "Berhasil login", token, data });
   } catch (err) {
     console.error("Error login:", err);
     next(err);
