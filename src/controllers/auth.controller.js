@@ -203,8 +203,6 @@ const login = async (req, res, next) => {
 
   let data = {};
   try {
-    console.log("phoneNumber", phoneNumber);
-    console.log("password", password);
     if (!phoneNumber || !password) {
       return res.status(400).json({
         status: false,
@@ -229,7 +227,7 @@ const login = async (req, res, next) => {
 
     // decrpt hashed password & compare it
     const hashedPassword = user.password;
-    const validPassword = bcrypt.compare(password, hashedPassword);
+    const validPassword = await bcrypt.compare(password, hashedPassword);
 
     // authentication
     if (!user) {
