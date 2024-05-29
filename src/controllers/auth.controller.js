@@ -79,7 +79,9 @@ const sendOTPVerification = async (req, res, next) => {
       ).setStatusCode(404);
     }
 
-    const existingOTP = await OTPVerificationModel.getRecordById(existingUser.id);
+    const existingOTP = await OTPVerificationModel.getRecordById(
+      existingUser.id
+    );
 
     if (existingOTP) {
       await OTPVerificationModel.deleteRecordById(existingOTP.userId);
@@ -274,62 +276,27 @@ const secureAuth = (req, res, next) => {
 };
 
 // Reset Password Controller
-const resetPassword = async (req, res) => {
-  const { userId, otp, newPassword } = req.body;
+const forgotPassword = async (req, res) => {
+  const { phoneNumber, newPassword, userId } = req.body;
 
   // authentication
-  if (!userId) {
-    throw new CustomError.ClientError("Harap cantumkan userId.").setStatusCode(
-      401
-    );
-  }
-
-  if (!otp) {
+  if (!phoneNumber) {
     throw new CustomError.ClientError(
-      "Harap cantumkan kode OTP."
+      "Harap cantumkan nomor telepon."
     ).setStatusCode(401);
   }
-
   if (!newPassword) {
     throw new CustomError.ClientError(
-      "Harap cantumkan password baru."
+      "Harap cantumkan password baru anda."
+    ).setStatusCode(401);
+  }
+  if (!userId) {
+    throw new CustomError.ClientError(
+      "Harap cantumkan password baru anda."
     ).setStatusCode(401);
   }
 
   try {
-    const OTPVerificationRecord = await OTPVerificationModel.getRecordById(
-      userId
-    );
-
-    // validate otp verification record
-    if (!OTPVerificationRecord) {
-      throw new CustomError.ClientError(
-        "Pengguna sudah terverifikasi. Silahkan login."
-      ).setStatusCode(404);
-    }
-
-    const { expiresAt } = OTPVerificationRecord;
-
-    // validate expired otp
-    if (Date.now() > expiresAt) {
-      // delete expired otp verification
-      await OTPVerificationModel.deleteRecordById(userId);
-
-      throw new CustomError.ClientError(
-        "Maaf kode OTP tersebut sudah kadaluarsa. Silahkan melakukan permintaan OTP lagi."
-      ).setStatusCode(401);
-    }
-
-    const hashedOTP = OTPVerificationRecord.otp;
-    const validOTP = await bcrypt.compare(otp, hashedOTP);
-
-    // validate not valid otp
-    if (!validOTP) {
-      throw new CustomError.ClientError(
-        "Maaf kode OTP yang anda masukkan salah. Silahkan periksa lagi."
-      ).setStatusCode(401);
-    }
-
     // hashing password
     const hashedPassword = await hashData(newPassword);
 
@@ -358,6 +325,6 @@ const authController = {
   verifyOTP,
   login,
   secureAuth,
-  resetPassword,
+  forgotPassword,
 };
 module.exports = authController;
