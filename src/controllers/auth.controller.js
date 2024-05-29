@@ -12,13 +12,11 @@ const register = async (req, res, next) => {
   const { phoneNumber, username, password } = req.body;
 
   try {
-
-    // check req body 
-    if ( !phoneNumber || !username || !password ) {
+    // check req body
+    if (!phoneNumber || !username || !password) {
       return res.status(400).json({
         status: false,
-        message:
-          "Tidak sesuai dengan ketentuan register kami!",
+        message: "Tidak sesuai dengan ketentuan register kami!",
       });
     }
 
@@ -37,7 +35,7 @@ const register = async (req, res, next) => {
           status: true,
           message:
             "Nomor telepon sudah terdaftar tetapi belum terverifikasi. Silahkan melakukan verifikasi.",
-          existingUser,
+          user: existingUser,
         });
       }
     }
@@ -59,7 +57,7 @@ const register = async (req, res, next) => {
     return res.status(200).json({
       status: true,
       message: "Pengguna berhasil mendaftar. Silahkan melakukan verifikasi.",
-      newUser,
+      user: newUser,
     });
   } catch (err) {
     console.error("Error saat menambahkan pengguna:", err);
@@ -79,6 +77,12 @@ const sendOTPVerification = async (req, res, next) => {
       throw new CustomError.ClientError(
         "Nomor telepon belum terdaftar. Silahkan register atau gunakan nomor lain"
       ).setStatusCode(404);
+    }
+
+    const existingOTP = await OTPVerificationModel.getRecordById(existingUser.id);
+
+    if (existingOTP) {
+      await OTPVerificationModel.deleteRecordById(existingOTP.userId);
     }
 
     // create otp
@@ -199,26 +203,23 @@ const login = async (req, res, next) => {
 
   let data = {};
   try {
-
-    console.log('phoneNumber', phoneNumber);
-    console.log('password', password);
-    if ( !phoneNumber  || !password ) {
+    console.log("phoneNumber", phoneNumber);
+    console.log("password", password);
+    if (!phoneNumber || !password) {
       return res.status(400).json({
         status: false,
-        message:
-          "Tidak sesuai dengan ketentuan kami!",
+        message: "Tidak sesuai dengan ketentuan kami!",
       });
     }
 
     // search user by phone number
     const user = await usersModel.getUserByPhoneNumber(phoneNumber);
     // check user ada atau tidak
-    if ( !user ) {
-      console.log('user', user) ;
+    if (!user) {
+      console.log("user", user);
       return res.status(404).json({
         status: false,
-        message:
-          "Nomor telepon tidak ditemukan",
+        message: "Nomor telepon tidak ditemukan",
       });
     }
 
