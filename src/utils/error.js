@@ -5,13 +5,14 @@ class ClientError extends Error {
     statusCode = 400
   ) {
     super(message);
-    this.status;
-    this.statusCode;
+    this.status = status;
+    this.statusCode = statusCode;
   }
 
   // Metode untuk mengatur statusCode
   setStatusCode(newStatusCode) {
     this.statusCode = newStatusCode;
+    return this;
   }
 }
 
@@ -22,13 +23,14 @@ class ServerError extends Error {
     statusCode = 500
   ) {
     super(message);
-    this.status;
-    this.statusCode;
+    this.status = status;
+    this.statusCode = statusCode;
   }
 
   // Metode untuk mengatur statusCode
   setStatusCode(newStatusCode) {
     this.statusCode = newStatusCode;
+    return this;
   }
 }
 
