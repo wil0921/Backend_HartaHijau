@@ -18,7 +18,6 @@ app.set("view engine", "ejs");
 app.set("views",  path.join(__dirname, "../whatsapp-api/app/views"));
 app.use(serverMiddleware.logRequestTime);
 app.use(serverMiddleware.maintenanceMode);
-app.use(errorMiddleware.responseError);
 
 app.get("/", (req, res) => {
   res.status(200).send("Selamat datang di server Node.js!");
@@ -32,5 +31,8 @@ app.use("/wa/api/v1", whatsappApi.MainRouter);
 app.use("*", (req, res) => {
   res.status(404).json({ code: 404, message: "Ups, something went wrong" });
 });
+
+// Error handling middleware
+app.use(errorMiddleware.responseError);
 
 module.exports = app;
