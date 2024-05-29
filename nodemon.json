@@ -1,0 +1,3 @@
+{
+  "ignore": ["lib/.js", "README", "./wa_credentials", ".w"]
+}
