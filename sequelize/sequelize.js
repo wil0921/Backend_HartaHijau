@@ -1,5 +1,4 @@
 const { Sequelize, DataTypes } = require("sequelize");
-const { transaction_history } = require("../src/config/database");
 
 const sequelize = new Sequelize(process.env.DATABASE_URL);
 
