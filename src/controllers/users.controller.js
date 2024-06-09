@@ -2,7 +2,7 @@ const { v4: uuidv4 } = require("uuid"); // to generate unique random id
 const usersModel = require("../models/users.model");
 const { hashData, CustomError } = require("../utils");
 
-const createNewUser = async (req, res) => {
+const createNewUser = async (req, res, next) => {
   const { phoneNumber, username, password } = req.body;
 
   if (!phoneNumber || !username || !password) {
@@ -35,7 +35,7 @@ const createNewUser = async (req, res) => {
   }
 };
 
-const getAllUser = async (req, res) => {
+const getAllUser = async (req, res, next) => {
   try {
     const users = await usersModel.getAllUser();
 
@@ -56,7 +56,7 @@ const getAllUser = async (req, res) => {
   }
 };
 
-const deleteUserById = async (req, res) => {
+const deleteUserById = async (req, res, next) => {
   const id = req.query.id;
 
   if (!id) {
