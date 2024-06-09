@@ -1,8 +1,9 @@
 const { Sequelize, DataTypes } = require("sequelize");
+const { transaction_history } = require("../src/config/database");
 
 const sequelize = new Sequelize(process.env.DATABASE_URL);
 
-export const User = sequelize.define(
+const User = sequelize.define(
   "User",
   {
     id: {
@@ -34,7 +35,7 @@ export const User = sequelize.define(
   }
 );
 
-export const Profile = sequelize.define(
+const Profile = sequelize.define(
   "Profile",
   {
     id: {
@@ -65,7 +66,7 @@ export const Profile = sequelize.define(
   }
 );
 
-export const Otp_verification = sequelize.define(
+const Otp_verification = sequelize.define(
   "Otp_verification",
   {
     id: {
@@ -96,7 +97,7 @@ export const Otp_verification = sequelize.define(
   }
 );
 
-export const Poin = sequelize.define(
+const Poin = sequelize.define(
   "Poin",
   {
     id: {
@@ -119,7 +120,7 @@ export const Poin = sequelize.define(
   }
 );
 
-export const Transaction_history = sequelize.define(
+const Transaction_history = sequelize.define(
   "Transaction_history",
   {
     id: {
@@ -222,3 +223,12 @@ Transaction_history.belongsTo(User, {
   onDelete: "CASCADE",
   onUpdate: "CASCADE",
 });
+
+
+module.exports = {
+  User,
+  Profile,
+  Otp_verification,
+  Poin,
+  Transaction_history,
+}
