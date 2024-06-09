@@ -2,7 +2,7 @@ const { Sequelize, DataTypes } = require("sequelize");
 
 const sequelize = new Sequelize(process.env.DATABASE_URL);
 
-const User = sequelize.define(
+export const User = sequelize.define(
   "User",
   {
     id: {
@@ -34,7 +34,7 @@ const User = sequelize.define(
   }
 );
 
-const Profile = sequelize.define(
+export const Profile = sequelize.define(
   "Profile",
   {
     id: {
@@ -65,7 +65,7 @@ const Profile = sequelize.define(
   }
 );
 
-const Otp_verification = sequelize.define(
+export const Otp_verification = sequelize.define(
   "Otp_verification",
   {
     id: {
@@ -96,7 +96,7 @@ const Otp_verification = sequelize.define(
   }
 );
 
-const Poin = sequelize.define(
+export const Poin = sequelize.define(
   "Poin",
   {
     id: {
@@ -119,7 +119,7 @@ const Poin = sequelize.define(
   }
 );
 
-const Transaction_history = sequelize.define(
+export const Transaction_history = sequelize.define(
   "Transaction_history",
   {
     id: {
