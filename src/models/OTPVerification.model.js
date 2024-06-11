@@ -1,19 +1,19 @@
-const prisma = require("../config/database");
+const { Otp_verification } = require("../../sequelize/sequelize");
 
 const addRecord = (newOTPRecord) => {
   const { userId, otp, expiresAt } = newOTPRecord;
-  return prisma.otp_verification.create({
-    data: {
-      userId,
-      otp,
-      expiresAt,
-    },
+  return Otp_verification.create({
+    userId,
+    otp,
+    expiresAt,
   });
 };
 
-const getRecordById = (userId) => prisma.otp_verification.findUnique({ where: { userId } });
+const getRecordById = (userId) =>
+  Otp_verification.findOne({ where: { userId } });
 
-const deleteRecordById = (userId) => prisma.otp_verification.delete({ where: { userId } });
+const deleteRecordById = (userId) =>
+  Otp_verification.destroy({ where: { userId } });
 
 module.exports = {
   addRecord,

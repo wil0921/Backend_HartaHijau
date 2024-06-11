@@ -1,23 +1,25 @@
-const prisma = require("../config/database");
+const { Transaction_history } = require("../../sequelize/sequelize");
 const { v4: uuidv4 } = require("uuid");
 
-const createHistory = async (transactionId, senderId, recipientId, amount, transactionType) => {
-  return await prisma.transaction_history.create({
-    data: {
-      id: uuidv4(),
-      transactionId,
-      transactionDate: new Date(),
-      transactionType,
-      senderId,
-      recipientId,
-      amount,
-    },
+const createHistory = (
+  transactionId,
+  senderId,
+  recipientId,
+  amount,
+  transactionType
+) => {
+  return Transaction_history.create({
+    id: uuidv4(),
+    transactionId,
+    transactionDate: new Date(),
+    transactionType,
+    senderId,
+    recipientId,
+    amount,
   });
 };
 
-const getAllHistory = async () => {
-  return await prisma.transaction_history.findMany();
-};
+const getAllHistory = () => Transaction_history.findAll();
 
 module.exports = {
   createHistory,

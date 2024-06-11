@@ -1,32 +1,30 @@
-const prisma = require("../config/database");
+const { User } = require("../../sequelize/sequelize");
 
 const createNewUser = (newUser) => {
   const { id, phoneNumber, username, password, verified } = newUser;
-  return prisma.user.create({
-    data: {
-      id,
-      phone_number: phoneNumber,
-      username,
-      password,
-      verified,
-    },
+  return User.create({
+    id,
+    phone_number: phoneNumber,
+    username,
+    password,
+    verified,
   });
 };
 
-const getAllUser = () => prisma.user.findMany();
+const getAllUser = () => User.findAll();
 
-const getUserById = (id) => prisma.user.findUnique({ where: { id } });
+const getUserById = (id) => User.findOne({ where: { id } });
 
 const getUserByPhoneNumber = (phoneNumber) => {
-  return prisma.user.findUnique({ where: { phone_number: phoneNumber } });
+  return User.findOne({ where: { phone_number: phoneNumber } });
 };
 
 const updateUserById = (field, value, id) => {
   const data = { [field]: value };
-  return prisma.user.update({ where: { id }, data });
+  return User.update({ data }, { where: { id } });
 };
 
-const deleteUserById = (id) => prisma.user.delete({ where: { id } });
+const deleteUserById = (id) => User.destroy({ where: { id } });
 
 module.exports = {
   createNewUser,

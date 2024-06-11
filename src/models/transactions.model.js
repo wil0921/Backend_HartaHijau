@@ -1,15 +1,14 @@
-const prisma = require("../config/database");
+const { sequelize, User, Transaction_history } = require("../../sequelize");
 const { v4: uuidv4 } = require("uuid");
 
 const transferBalance = async (senderId, recipientId, amount) => {
-  return await prisma.$transaction(async (trx) => {
+  return await sequelize.transaction(async (trx) => {
     // 1. decrease sender poin balance
-    const sender = await trx.user.update({
-      where: { id: senderId },
-      data: {
-        poin: { decrement: { balance: amount } },
-      },
-    });
+    const sender = await User.findOne(
+      { where: { id: senderId } },
+      { transaction: trx }
+    );
+    await sender.decrement({ balance: amount }, { transaction: trx });
 
     // 2. verify that the sender's poin balance didn't go below zero.
     if (sender.poin.balance < 0) {
@@ -19,22 +18,22 @@ const transferBalance = async (senderId, recipientId, amount) => {
     }
 
     // 3. increase recipient poin balance
-    const recipient = await trx.account.update({
-      where: { id: recipientId },
-      data: {
-        poin: { increment: { balance: amount } },
-      },
-    });
+    const recipient = await User.findOne(
+      { where: { id: recipientId } },
+      { transaction: trx }
+    );
+    await recipient.increment({ balance: amount }, { transaction: trx });
 
-    const transactionHistory = await trx.transaction_history.create({
-      data: {
+    const transactionHistory = await Transaction_history.create(
+      {
         transactionId: uuidv4(),
         amount,
         senderId,
         recipientId,
         status: "succesful",
       },
-    });
+      { transaction: trx }
+    );
 
     return transactionHistory;
   });

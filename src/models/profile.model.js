@@ -1,24 +1,28 @@
-const prisma = require("../config/database");
+const { Profile } = require("../../sequelize/sequelize");
 
 const createUserProfile = (userId) => {
-  return prisma.profile.create({
-    data: { userId },
-  });
+  return Profile.create({ userId });
 };
 
 const getUserProfileById = (userId) => {
-  return prisma.profile.findUnique({
+  return Profile.findOne({
     where: { userId },
-    select: {
-      profile_picture: true,
-      user: { select: { username: true } },
-      poin: { select: { total_withdrawl: true, total_earning: true } },
-    },
+    attributes: ["profile_picture"],
+    include: [
+      {
+        model: User,
+        attributes: ["username"],
+      },
+      {
+        model: Poin,
+        attributes: ["total_withdrawl", "total_earning"],
+      },
+    ],
   });
 };
 
 const getDetailUserProfileById = (userId) => {
-  return prisma.profile.findUnique({
+  return Profile.findOne({
     where: { userId },
     select: {
       email: true,
@@ -29,10 +33,12 @@ const getDetailUserProfileById = (userId) => {
 };
 
 const updateUserProfileById = (userId, fields) => {
-  return prisma.profile.update({
-    where: { userId },
-    data: fields,
-  });
+  return Profile.update(
+    { fields },
+    {
+      where: { userId },
+    }
+  );
 };
 
 module.exports = {
