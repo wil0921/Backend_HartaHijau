@@ -223,11 +223,11 @@ Transaction_history.belongsTo(User, {
   onUpdate: "CASCADE",
 });
 
-
 module.exports = {
+  sequelize,
   User,
   Profile,
   Otp_verification,
   Poin,
   Transaction_history,
-}
+};
