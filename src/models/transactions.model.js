@@ -1,4 +1,4 @@
-const { sequelize, User, Transaction_history } = require("../../sequelize");
+const { sequelize, User, Transaction_history } = require("../../sequelize/sequelize");
 const { v4: uuidv4 } = require("uuid");
 
 const transferBalance = async (senderId, recipientId, amount) => {
