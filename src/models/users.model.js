@@ -1,4 +1,4 @@
-const { User } = require("../../sequelize/sequelize");
+const { User } = require("../../sequelize/db/models/index");
 
 const createNewUser = (newUser) => {
   const { id, phoneNumber, username, password, verified } = newUser;
@@ -21,7 +21,7 @@ const getUserByPhoneNumber = (phoneNumber) => {
 
 const updateUserById = (field, value, id) => {
   const data = { [field]: value };
-  return User.update({ data }, { where: { id } });
+  return User.update(data, { where: { id } });
 };
 
 const deleteUserById = (id) => User.destroy({ where: { id } });

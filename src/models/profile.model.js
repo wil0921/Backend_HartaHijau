@@ -1,4 +1,4 @@
-const { Profile } = require("../../sequelize/sequelize");
+const { Profile } = require("../../sequelize/db/models");
 
 const createUserProfile = (userId) => {
   return Profile.create({ userId });

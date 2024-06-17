@@ -1,4 +1,4 @@
-const { Transaction_history } = require("../../sequelize/sequelize");
+const { Transaction_history } = require("../../sequelize/db/models");
 const { v4: uuidv4 } = require("uuid");
 
 const createHistory = (

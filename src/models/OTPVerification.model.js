@@ -1,4 +1,4 @@
-const { Otp_verification } = require("../../sequelize/sequelize");
+const { Otp_verification } = require("../../sequelize/db/models");
 
 const addRecord = (newOTPRecord) => {
   const { userId, otp, expiresAt } = newOTPRecord;
