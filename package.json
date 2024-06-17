@@ -5,9 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "nodemon server.js",
-    "migrate": "npx prisma migrate dev --name init",
-    "studio": "npx prisma studio",
-    "format": "prisma format"
+    "migrate": "npx sequelize-cli db:migrate"
   },
   "author": "",
   "license": "ISC",
@@ -25,6 +23,7 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.2.2",
     "mysql2": "^3.10.0",
+    "path": "^0.12.7",
     "qrcode": "^1.5.3",
     "sequelize": "^6.37.3",
     "uuid": "^9.0.1",
