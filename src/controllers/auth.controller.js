@@ -201,13 +201,13 @@ const verifyOTP = async (req, res, next) => {
 
 // Login controller
 const login = async (req, res, next) => {
-  const { phoneNumber, password, username } = req.body;
+  const { phoneNumber, password } = req.body;
 
   try {
-    if (!phoneNumber || !password || !username) {
+    if (!phoneNumber || !password) {
       return res.status(400).json({
         status: false,
-        message: "Tidak sesuai dengan ketentuan kami!",
+        message: "Harap masukkan nomor telepon dan password!",
       });
     }
 
@@ -237,7 +237,8 @@ const login = async (req, res, next) => {
     if (!user.verified) {
       return res.status(400).json({
         status: false,
-        message: "Pengguna belum melakukan verifikasi, silahkan melakukan verifikasi terlebih dahulu.",
+        message:
+          "Pengguna belum melakukan verifikasi, silahkan melakukan verifikasi terlebih dahulu.",
       });
     }
 
@@ -246,23 +247,18 @@ const login = async (req, res, next) => {
       expiresIn: "1h",
     });
 
-    // Response data
-    const responseData = {
+    //login success
+    return res.status(200).json({
       status: true,
       message: "Berhasil login",
+      user: { username: user.username, phoneNumber: user.phone_number },
       token,
-      username: user.username,
-      phoneNumber: user.phoneNumber, // Fixing phone_number to phoneNumber
-    };
-
-    //login success
-    return res.status(200).json(responseData);
+    });
   } catch (err) {
     console.error("Error login:", err);
     next(err);
   }
 };
-
 
 // Secure User controller
 const secureAuth = (req, res, next) => {
