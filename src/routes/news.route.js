@@ -1,7 +1,9 @@
 const express = require('express');
-const router = express.Router();
+const newsRoute = express.Router();
 const newsController = require('../controllers/news.controller');
+const upload = require('../middleware/upload'); // Adjust the path as necessary
 
-router.get('/news', newsController.getNews);
+newsRoute.post('/news', upload.single('thumbnail'), newsController.createNews);
+newsRoute.get('/news', newsController.getAllNews);
 
-module.exports = router;
+module.exports = newsRoute;

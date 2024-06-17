@@ -26,6 +26,7 @@
     "path": "^0.12.7",
     "qrcode": "^1.5.3",
     "sequelize": "^6.37.3",
+    "sequelize-cli": "^6.6.2",
     "uuid": "^9.0.1",
     "wa-multi-session": "^3.4.0",
     "whatsapp-web.js": "^1.16.4-alpha.0"
