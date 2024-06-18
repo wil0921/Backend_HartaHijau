@@ -3,14 +3,8 @@ const { Model } = require("sequelize");
 
 module.exports = (sequelize, DataTypes) => {
   class News extends Model {
-    static associate(models) {
-      News.belongsTo(models.User, {
-        foreignKey: "userId",
-        onDelete: "CASCADE",
-        onUpdate: "CASCADE",
-      });
-    }
-  }  
+    static associate(models) {}
+  }
   News.init(
     {
       title: {
@@ -23,7 +17,7 @@ module.exports = (sequelize, DataTypes) => {
       },
       thumbnail: {
         type: DataTypes.STRING,
-        allowNull: false,
+        allowNull: true,
         validate: {
           isUrl: true, // Ensure the thumbnail is a valid URL
         },
