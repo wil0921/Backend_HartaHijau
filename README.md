@@ -1,7 +1,28 @@
 # Documentation for backend harta hijau app
 
-## Auth Register (tested)
+## How to use
+[1] clone this repository
+```
+git clone [this repo url.git]
+```
+[2] install the necessary package
+```
+npm install
+```
+[3] run the server
+```
+npm run start
+```
 
+#### Example Request
+Demo Request Auth API
+
+[1] create new session in local wa gateway API
+- Endpoint: `GET` `/wa/api/v1/start-session`
+
+If you don't have a session yet, you will see a QR code appear on the screen. Scan the qrcode using your WhatsApp account
+
+[2] Auth Register
 - Endpoint: `POST` `api/v1/auth/register`
 
 - Example Request Body:
@@ -20,12 +41,10 @@
 {
     status: true,
     message: "Pengguna berhasil mendaftar. Silahkan melakukan verifikasi.",
-    newUser
+    user
 }
 ```
-
-## Auth sendOTPVerification (under development & tested)
-
+[3] Auth sendOTPVerification
 - Endpoint: `POST` `api/v1/auth/otp/send`
 
 - Example Request Body:
@@ -44,9 +63,7 @@
     message: "kode otp telah berhasil dikirim ke nomor 081234567890. Silahkan melakukan verifikasi otp"
 }
 ```
-
-## Auth verifyOTP (under development & tested)
-
+[4] Auth verifyOTP
 - Endpoint: `POST` `api/v1/auth/otp/verify`
 
 - Example Request Body:
@@ -67,9 +84,7 @@
     token,
 }
 ```
-
-## Auth Login (under development / tested)
-
+[5] Auth Login
 - Endpoint: `GET` `api/v1/auth/login`
 
 - Example Request Body:
@@ -90,6 +105,7 @@
     token
 }
 ```
+# Other API (still under develpment)
 
 ## Auth Forgot Password (under development / not tested yet)
 
@@ -163,7 +179,6 @@
 # To Do List:
 
 - add redis for otp record
-- merge wa_gateway source code with backend source code
 - add time limit on qr scan feature
 - add transaction_history feature
 - fix logic for creating user profile
@@ -172,6 +187,4 @@
 - add news and products controllers
 - add news and products routes
 - improve database searching using indexes
-- continue writing poin & profile API docs
-- create news feature
 - upgrade API docs
