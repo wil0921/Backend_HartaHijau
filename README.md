@@ -14,15 +14,15 @@ npm install
 npm run start
 ```
 
-#### Example Request
+### Example Request
 Demo Request Auth API
 
-[1] create new session in local wa gateway API
+#### [1] create new session in local wa gateway API
 - Endpoint: `GET` `/wa/api/v1/start-session`
 
 If you don't have a session yet, you will see a QR code appear on the screen. Scan the qrcode using your WhatsApp account
 
-[2] Auth Register
+#### [2] Auth Register
 - Endpoint: `POST` `api/v1/auth/register`
 
 - Example Request Body:
@@ -44,7 +44,7 @@ If you don't have a session yet, you will see a QR code appear on the screen. Sc
     user
 }
 ```
-[3] Auth sendOTPVerification
+#### [3] Auth sendOTPVerification
 - Endpoint: `POST` `api/v1/auth/otp/send`
 
 - Example Request Body:
@@ -63,7 +63,7 @@ If you don't have a session yet, you will see a QR code appear on the screen. Sc
     message: "kode otp telah berhasil dikirim ke nomor 081234567890. Silahkan melakukan verifikasi otp"
 }
 ```
-[4] Auth verifyOTP
+#### [4] Auth verifyOTP
 - Endpoint: `POST` `api/v1/auth/otp/verify`
 
 - Example Request Body:
@@ -84,7 +84,7 @@ If you don't have a session yet, you will see a QR code appear on the screen. Sc
     token,
 }
 ```
-[5] Auth Login
+#### [5] Auth Login
 - Endpoint: `GET` `api/v1/auth/login`
 
 - Example Request Body:
