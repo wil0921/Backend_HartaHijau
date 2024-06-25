@@ -111,7 +111,7 @@ const updateNewsById = async (req, res, next) => {
   }
 };
 
-const deleteNewById = async (req, res, next) => {
+const deleteNewsById = async (req, res, next) => {
   const { id } = req.query;
 
   if (!id) {
@@ -146,5 +146,5 @@ module.exports = {
   getAllNews,
   getNewsById,
   updateNewsById,
-  deleteNewById,
+  deleteNewsById,
 };
