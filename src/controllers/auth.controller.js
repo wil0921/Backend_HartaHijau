@@ -3,7 +3,6 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const axios = require("axios");
 const usersModel = require("../models/users.model");
-const profileModel = require("../models/profile.model");
 const OTPVerificationModel = require("../models/OTPVerification.model");
 const { generateOTP, hashData, CustomError } = require("../utils");
 
@@ -143,16 +142,22 @@ const verifyOTP = async (req, res, next) => {
   }
 
   try {
+    const isUserExist = await usersModel.getUserById(userId);
+    if (!isUserExist) {
+      throw new CustomError.ClientError(
+        "ID pengguna yang anda masukkan salah."
+      ).setStatusCode(404);
+    }
+
+    if (isUserExist.verified) {
+      throw new CustomError.ClientError(
+        "Pengguna sudah terverifikasi. Silahkan login."
+      ).setStatusCode(401);
+    }
+
     const OTPVerificationRecord = await OTPVerificationModel.getRecordById(
       userId
     );
-
-    // validate otp verification record
-    if (!OTPVerificationRecord) {
-      throw new CustomError.ClientError(
-        "Pengguna sudah terverifikasi. Silahkan login."
-      ).setStatusCode(404);
-    }
 
     const { expiresAt } = OTPVerificationRecord;
 
@@ -180,8 +185,6 @@ const verifyOTP = async (req, res, next) => {
     await usersModel.updateUserById("verified", true, userId);
     // delete success otp verification record
     await OTPVerificationModel.deleteRecordById(userId);
-    //create user profile
-    await profileModel.createUserProfile(userId);
 
     //generate jwt token
     const token = jwt.sign({ userId }, "secret_key", {
