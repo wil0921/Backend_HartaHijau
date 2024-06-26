@@ -1,39 +1,5 @@
-const { v4: uuidv4 } = require("uuid"); // to generate unique random id
 const usersModel = require("../models/users.model");
-const { hashData, CustomError } = require("../utils");
-
-const createNewUser = async (req, res, next) => {
-  const { phoneNumber, username, password } = req.body;
-
-  if (!phoneNumber || !username || !password) {
-    throw new CustomError.ClientError(
-      "Masih ada data yang kosong, harap cantumkan data dengan lengkap."
-    ).setStatusCode(403);
-  }
-
-  // hashing password
-  const hashedPassword = hashData(password);
-
-  try {
-    const newUser = {
-      id: uuidv4(),
-      phoneNumber,
-      username,
-      hashedPassword,
-      verified: false,
-    };
-
-    await usersModel.createNewUser(newUser);
-
-    return res.status(201).json({
-      status: true,
-      message: "Berhasil menambahkan pengguna",
-    });
-  } catch (err) {
-    console.error("Error saat menambahkan pengguna:", err);
-    next(err);
-  }
-};
+const { CustomError } = require("../utils");
 
 const getAllUser = async (req, res, next) => {
   try {
