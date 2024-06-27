@@ -4,6 +4,7 @@ const bcrypt = require("bcrypt");
 const axios = require("axios");
 const usersModel = require("../models/users.model");
 const OTPVerificationModel = require("../models/OTPVerification.model");
+const walletModel = require("../models/wallet.model");
 const { generateOTP, hashData, CustomError } = require("../utils");
 
 // Register controller
@@ -182,9 +183,14 @@ const verifyOTP = async (req, res, next) => {
     }
 
     // verified user that success otp verification
-    await usersModel.updateUserById("verified", true, userId);
+    await usersModel.updateUserById(userId, { verified: true });
     // delete success otp verification record
     await OTPVerificationModel.deleteRecordById(userId);
+    //create user wallet
+    const isWalletExist = await walletModel.getUserWalletById(userId);
+    if (!isWalletExist) {
+      await walletModel.createUserWallet(userId);
+    }
 
     //generate jwt token
     const token = jwt.sign({ userId }, "secret_key", {
