@@ -11,7 +11,7 @@ module.exports = {
       },
       username: {
         type: Sequelize.STRING(225),
-        allowNull: false,
+        allowNull: true,
       },
       phone_number: {
         type: Sequelize.STRING(15),
@@ -25,6 +25,15 @@ module.exports = {
       verified: {
         type: Sequelize.BOOLEAN,
         defaultValue: false,
+      },
+      email: {
+        type: Sequelize.STRING(225),
+        allowNull: true,
+        unique: true,
+      },
+      profile_picture: {
+        type: Sequelize.STRING(225),
+        allowNull: true,
       },
       createdAt: {
         allowNull: false,

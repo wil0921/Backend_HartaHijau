@@ -3,17 +3,12 @@ const { Model } = require("sequelize");
 module.exports = (sequelize, DataTypes) => {
   class User extends Model {
     static associate(models) {
-      User.hasOne(models.Profile, {
-        foreignKey: "userId",
-        onDelete: "CASCADE",
-        onUpdate: "CASCADE",
-      });
       User.hasOne(models.Otp_verification, {
         foreignKey: "userId",
         onDelete: "CASCADE",
         onUpdate: "CASCADE",
       });
-      User.hasOne(models.Poin, {
+      User.hasOne(models.Wallet, {
         foreignKey: "userId",
         onDelete: "CASCADE",
         onUpdate: "CASCADE",
@@ -51,6 +46,15 @@ module.exports = (sequelize, DataTypes) => {
       password: {
         type: DataTypes.STRING(225),
         allowNull: false,
+      },
+      email: {
+        type: DataTypes.STRING(225),
+        unique: true,
+        allowNull: true,
+      },
+      profile_picture: {
+        type: DataTypes.STRING(225),
+        allowNull: true,
       },
       verified: {
         type: DataTypes.BOOLEAN,
