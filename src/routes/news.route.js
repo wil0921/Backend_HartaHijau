@@ -11,6 +11,6 @@ newsRoute.get("/", newsController.getNewsById);
 
 newsRoute.post("/", newsController.updateNewsById);
 
-newsRoute.delete("/", newsController.deleteNewById);
+newsRoute.delete("/", newsController.deleteNewsById);
 
 module.exports = newsRoute;
